@@ -1,7 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 import Fastify from "fastify";
+import cors from "@fastify/cors";
+
 const fastify = Fastify({
   logger: true,
+});
+
+fastify.register(cors, {
+  origin: (origin, cb) => {
+    if (origin) {
+      const hostname = new URL(origin).hostname;
+      if (hostname === "localhost") {
+        cb(null, true);
+        return;
+      }
+      cb(new Error("Not allowed"), false);
+    }
+  },
 });
 
 const prisma = new PrismaClient();
