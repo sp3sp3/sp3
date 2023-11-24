@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import Fastify from "fastify";
+import Fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 
 const fastify = Fastify({
@@ -29,6 +29,26 @@ fastify.get("/projects", async function (request, reply) {
   const projects = await prisma.project.findMany({});
   reply.send({ projects: projects });
 });
+
+export interface BodyType {
+  name: string;
+}
+
+fastify.post(
+  "/addProject",
+  async function (request: FastifyRequest<{ Body: BodyType }>, reply) {
+    console.log("BODY: ", request.body);
+    const { name } = request.body;
+
+    const project = await prisma.project.create({
+      data: {
+        name: name,
+      },
+    });
+
+    reply.send({ project: project });
+  },
+);
 
 const start = async () => {
   try {

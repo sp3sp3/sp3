@@ -22,7 +22,6 @@ fastify.register(cors_1.default, {
     origin: (origin, cb) => {
         if (origin) {
             const hostname = new URL(origin).hostname;
-            console.log(`HOSTNAME: ${hostname}`);
             if (hostname === "localhost") {
                 cb(null, true);
                 return;
@@ -39,6 +38,18 @@ fastify.get("/projects", function (request, reply) {
     return __awaiter(this, void 0, void 0, function* () {
         const projects = yield prisma.project.findMany({});
         reply.send({ projects: projects });
+    });
+});
+fastify.post("/addProject", function (request, reply) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log("BODY: ", request.body);
+        const { name } = request.body;
+        const project = yield prisma.project.create({
+            data: {
+                name: name,
+            },
+        });
+        reply.send({ project: project });
     });
 });
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
