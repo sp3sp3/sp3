@@ -1,6 +1,6 @@
 import { PrismaClient } from ".prisma/client";
 import {
-  it,
+  test,
   afterEach,
   beforeEach,
   describe,
@@ -10,6 +10,7 @@ import {
 import { resetDB, runSeedForTests } from "../../prisma/seed";
 import supertest from "supertest";
 import { server } from "../index";
+import { CreateProjectHandlerRequest } from "../routes/projects";
 
 const prisma = new PrismaClient();
 describe("projects handlers", () => {
@@ -77,6 +78,46 @@ describe("projects handlers", () => {
 
       expect(result.statusCode).toEqual(200);
       expect(result.body).toStrictEqual(expectedResult);
+    });
+
+    describe("POST /", () => {
+      test("creates a top level project", async () => {
+        const payload: CreateProjectHandlerRequest = {
+          name: "test top level project",
+        };
+        const result = await supertest(server).post("/projects").send(payload);
+
+        const expectedResult = {
+          project: {
+            id: expect.any(Number),
+            name: "test top level project",
+            parentId: null,
+          },
+        };
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      test("creates a child project", async () => {
+        const payload: CreateProjectHandlerRequest = {
+          name: "test child project",
+          parentId: "1",
+        };
+
+        const result = await supertest(server).post("/projects").send(payload);
+
+        const expectedResult = {
+          project: {
+            id: expect.any(Number),
+            name: "test child project",
+            parentId: 1,
+          },
+        };
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      // test("fails if name is not specified", async () => {
+      //   const result = await supertest(server).post("/projects").send({});
+      // });
     });
   });
 });

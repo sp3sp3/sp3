@@ -29,8 +29,13 @@ export const getProjectByIdHandler = async (
   }
 };
 
+export interface CreateProjectHandlerRequest {
+  name: string;
+  parentId?: string;
+}
+
 export const createProjectHandler = async (
-  req: TypedRequestBody<{ name: string; parentId?: string }>,
+  req: TypedRequestBody<CreateProjectHandlerRequest>,
   res: TypedResponse<{ project: Project }>,
 ) => {
   const { name, parentId } = req.body;
