@@ -27,11 +27,11 @@ export const getProjectByIdHandler = async (
   res: TypedResponse<{ project: Project }>,
 ) => {
   const project = await prisma.project.findUnique({
-    where: { id: Number(req.body.id) },
+    where: { id: Number(req.params.id) },
   });
 
   if (!project) {
-    res.status(404).send(`Project id=${req.body.id} not found`);
+    res.status(404).send(`Project id=${req.params.id} not found`);
   } else {
     res.json({ project: project });
   }
