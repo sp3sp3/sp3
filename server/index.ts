@@ -7,6 +7,6 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use("/projects", projectRoutes);
 
-app.listen(port, () => {
+export const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

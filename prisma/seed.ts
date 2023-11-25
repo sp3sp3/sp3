@@ -23,16 +23,34 @@ const seedProjects = async () => {
   }
 };
 
-async function main() {
+const seedForTests = async () => {
   await seedProjects();
-}
+};
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+export const resetDB = async () => {
+  const tablenames = await prisma.$queryRaw<
+    Array<{ name: string }>
+  >`SELECT name FROM sqlite_schema WHERE type='table'`;
+
+  for (const { name } of tablenames) {
+    if (name !== "_prisma_migrations") {
+      try {
+        await prisma.$executeRawUnsafe(`DELETE FROM ${name}`);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  }
+};
+
+export const runSeedForTests = async () => {
+  return seedForTests()
+    .then(async () => {
+      await prisma.$disconnect();
+    })
+    .catch(async (e) => {
+      console.error(e);
+      await prisma.$disconnect();
+      process.exit(1);
+    });
+};
