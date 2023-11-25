@@ -11,6 +11,9 @@ datasource db {
 }
 
 model Project {
-  id   Int    @id @default(autoincrement())
-  name String
+  id       Int       @id @default(autoincrement())
+  name     String
+  parentId Int?
+  parent   Project?  @relation("ParentChild", fields: [parentId], references: [id])
+  children Project[] @relation("ParentChild")
 }
