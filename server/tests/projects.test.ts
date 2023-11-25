@@ -65,14 +65,18 @@ describe("projects handlers", () => {
     });
 
     test("GET /:id", async () => {
-      const result = await supertest(server).get("/projects").query({ id: 1 });
+      const result = await supertest(server).get("/projects/1");
 
       const expectedResult = {
         project: {
+          id: 1,
           name: "EGFR inhibitors",
           parentId: null,
         },
       };
+
+      expect(result.statusCode).toEqual(200);
+      expect(result.body).toStrictEqual(expectedResult);
     });
   });
 });
