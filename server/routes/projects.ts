@@ -14,7 +14,7 @@ export interface TypedResponse<T> extends Response {
   json: Send<T, this>;
 }
 
-const getProjectsHandler = async (
+export const getProjectsHandler = async (
   _: TypedRequestBody<{}>,
   res: TypedResponse<{ projects: Project[] }>,
 ) => {
@@ -22,7 +22,7 @@ const getProjectsHandler = async (
   res.json({ projects: projects });
 };
 
-const getProjectByIdHandler = async (
+export const getProjectByIdHandler = async (
   req: TypedRequestBody<{ id: string }>,
   res: TypedResponse<{ project: Project }>,
 ) => {
@@ -37,7 +37,7 @@ const getProjectByIdHandler = async (
   }
 };
 
-const createProjectHandler = async (
+export const createProjectHandler = async (
   req: TypedRequestBody<{ name: string; parentId?: string }>,
   res: TypedResponse<{ project: Project }>,
 ) => {
