@@ -1,37 +1,35 @@
-import { ButtonAppBar } from './components/ButtonAppBar'
-import { ProjectOverview } from './pages/ProjectOverview'
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-// import './index.css'
-
-
-import { ThemeOptions } from '@mui/material/styles';
-
-export const themeOptions: ThemeOptions = {
-    palette: {
-        mode: 'light',
-        primary: {
-            main: '#263238',
-        },
-        secondary: {
-            main: '#f50057',
-        },
-    },
-    typography: {
-        // fontFamily: 'Roboto Mono',
-    },
-};
-
-const theme = createTheme(themeOptions)
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
 
 function App() {
-    return (
-        <>
-            <ThemeProvider theme={theme}>
-                <ButtonAppBar />
-                <ProjectOverview />
-            </ThemeProvider>
-        </>
-    )
+  const [count, setCount] = useState(0)
+
+  return (
+    <>
+      <div>
+        <a href="https://vitejs.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
+      </div>
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
 }
 
 export default App
