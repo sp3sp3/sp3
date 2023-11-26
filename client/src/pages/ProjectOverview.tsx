@@ -4,6 +4,7 @@ import Stack from '@mui/material/Stack'
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
+import { CreateProjectHandlerRequest, CreateProjectHandlerResponse } from "../../../server/routes/projects"
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -19,19 +20,20 @@ export const ProjectOverview = () => {
 
     const addProject = async () => {
         try {
-            const response = await fetch("http://localhost:3000/addProject", {
+            const body: CreateProjectHandlerRequest = {
+                name: 'PROJECT 7'
+            }
+            const response = await fetch("http://localhost:3000/projects/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    'name': 'PROJECT 7'
-                })
+                body: JSON.stringify(body)
             })
-            const newProject: Project = await response.json()
-            console.log(response.status)
-            const newP = [...projects, newProject]
-            console.log(newProject, newP)
+            const newProject: CreateProjectHandlerResponse = await response.json()
+            console.log("STATUS: ", response.status)
+            const newP = [...projects, newProject.project]
+            console.log(newProject)
             setProjects(newP)
         } catch (error) {
             console.error("Error: ", error)
@@ -55,10 +57,12 @@ export const ProjectOverview = () => {
             <Stack spacing={2}>
                 <div>Hello from Project Overview
                     <button onClick={() => addProject()}>Add project</button>
+                    {projects.map((i, idx) =>
+                        <Item key={idx}>
+                            {i.name}
+                        </Item>
+                    )}
                 </div>
-                {projects.map((i) => <Item>
-                    {i.name}
-                </Item>)}
             </Stack>
         </Box>
     )
