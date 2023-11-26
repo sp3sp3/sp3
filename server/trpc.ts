@@ -13,7 +13,7 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   };
 };
 
-export const createTRPCContext = async (opts: CreateContextOptions) => {
+export const createTRPCContext = async () => {
   return createInnerTRPCContext({
     prisma,
   });

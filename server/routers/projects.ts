@@ -5,15 +5,15 @@ import {
   publicProcedure,
 } from "../trpc";
 
-const getProjectsHandler = (ctx: CreateContextOptions) => {
-  return ctx.prisma.project.findMany();
+const getProjectsHandler = async (ctx: CreateContextOptions) => {
+  return await ctx.prisma.project.findMany();
 };
 
-const getProjectByIdHandler = (
+const getProjectByIdHandler = async (
   ctx: CreateContextOptions,
   input: { id: number },
 ) => {
-  return ctx.prisma.project.findUnique({
+  return await ctx.prisma.project.findUnique({
     where: { id: input.id },
   });
 };
