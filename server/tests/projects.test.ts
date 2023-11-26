@@ -115,9 +115,9 @@ describe("projects handlers", () => {
         expect(result.body).toStrictEqual(expectedResult);
       });
 
-      // test("fails if name is not specified", async () => {
-      //   const result = await supertest(server).post("/projects").send({});
-      // });
+      test("fails if name is not specified", async () => {
+        await supertest(server).post("/projects").send({}).expect(400);
+      });
     });
   });
 });

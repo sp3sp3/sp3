@@ -1,4 +1,4 @@
-import { PrismaClient, Project } from "@prisma/client";
+import { Prisma, PrismaClient, Project } from "@prisma/client";
 import { Router } from "express";
 import { TypedRequestBody, TypedResponse } from "../types";
 
@@ -40,13 +40,19 @@ export const createProjectHandler = async (
 ) => {
   const { name, parentId } = req.body;
 
-  const project = await prisma.project.create({
-    data: {
-      name: name,
-      parentId: parentId ? Number(parentId) : null,
-    },
-  });
-  res.json({ project: project });
+  try {
+    const project = await prisma.project.create({
+      data: {
+        name: name,
+        parentId: parentId ? Number(parentId) : null,
+      },
+    });
+    res.json({ project: project });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientValidationError) {
+      res.status(400).send(`Invalid request: ${e.message}`);
+    }
+  }
 };
 
 projectRoutes.get("/", getProjectsHandler);
