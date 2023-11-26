@@ -34,9 +34,13 @@ export interface CreateProjectHandlerRequest {
   parentId?: string;
 }
 
+export interface CreateProjectHandlerResponse {
+  project: Project;
+}
+
 export const createProjectHandler = async (
   req: TypedRequestBody<CreateProjectHandlerRequest>,
-  res: TypedResponse<{ project: Project }>,
+  res: TypedResponse<CreateProjectHandlerResponse>,
 ) => {
   const { name, parentId } = req.body;
 
