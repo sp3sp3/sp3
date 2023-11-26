@@ -49,6 +49,7 @@ export const createProjectHandler = async (
       data: {
         name: name,
         parentId: parentId ? Number(parentId) : null,
+        base64image: base64image ? base64image : null,
       },
     });
     res.json({ project: project });
