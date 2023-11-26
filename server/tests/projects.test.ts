@@ -65,19 +65,25 @@ describe("projects handlers", () => {
       expect(result.body).toStrictEqual(expectedResult);
     });
 
-    test("GET /:id", async () => {
-      const result = await supertest(server).get("/projects/1");
+    describe("GET /:id", () => {
+      test("returns a project", async () => {
+        const result = await supertest(server).get("/projects/1");
 
-      const expectedResult = {
-        project: {
-          id: 1,
-          name: "EGFR inhibitors",
-          parentId: null,
-        },
-      };
+        const expectedResult = {
+          project: {
+            id: 1,
+            name: "EGFR inhibitors",
+            parentId: null,
+          },
+        };
 
-      expect(result.statusCode).toEqual(200);
-      expect(result.body).toStrictEqual(expectedResult);
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      test("returns 404 if project cannot be found", async () => {
+        await supertest(server).get("/projects/10000").expect(404);
+      });
     });
 
     describe("POST /", () => {
