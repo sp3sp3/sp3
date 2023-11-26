@@ -11,6 +11,10 @@ import { resetDB, runSeedForTests } from "../../prisma/seed";
 import supertest from "supertest";
 import { server } from "../index";
 import { CreateProjectHandlerRequest } from "../routes/projects";
+import { Response } from "superagent";
+import { Project } from "@prisma/client";
+
+export type SupertestResponse<T> = Omit<Response, "body"> & { body: T };
 
 const prisma = new PrismaClient();
 describe("projects handlers", () => {
@@ -50,17 +54,8 @@ describe("projects handlers", () => {
     // });
 
     test("GET /projects", async () => {
-      const result = await supertest(server).get("/projects");
-      const expectedResult = {
-        projects: [
-          { id: 1, name: "EGFR inhibitors", parentId: null },
-          { id: 2, name: "Pyridine synthesis", parentId: null },
-          { id: 3, name: "synthesis of XYZ", parentId: 1 },
-          { id: 4, name: "synthesis of step 1 - bromination", parentId: 3 },
-          { id: 5, name: "screening catalysts", parentId: 4 },
-        ],
-      };
-
+      const result: SupertestResponse<{ projects: Project[] }> =
+        await supertest(server).get("/projects");
       expect(result.statusCode).toEqual(200);
       expect(result.body.projects).toHaveLength(5);
       expect(result.body.projects[0]).toHaveProperty("name");

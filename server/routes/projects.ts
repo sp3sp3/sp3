@@ -6,17 +6,29 @@ export const projectRoutes = Router();
 
 const prisma = new PrismaClient();
 
+export interface GetProjectsHandlerResponse {
+  projects: Project[];
+}
+
 export const getProjectsHandler = async (
   _: TypedRequestBody<{}>,
-  res: TypedResponse<{ projects: Project[] }>,
+  res: TypedResponse<GetProjectsHandlerResponse>,
 ) => {
   const projects = await prisma.project.findMany({});
   res.json({ projects: projects });
 };
 
+export interface GetProjectByIdHandlerRequest {
+  id: string;
+}
+
+export interface GetProjectByIdHandlerResponse {
+  project: Project;
+}
+
 export const getProjectByIdHandler = async (
-  req: TypedRequestBody<{ id: string }>,
-  res: TypedResponse<{ project: Project }>,
+  req: TypedRequestBody<GetProjectByIdHandlerRequest>,
+  res: TypedResponse<GetProjectByIdHandlerResponse>,
 ) => {
   const project = await prisma.project.findUnique({
     where: { id: Number(req.params.id) },
@@ -32,6 +44,7 @@ export const getProjectByIdHandler = async (
 export interface CreateProjectHandlerRequest {
   name: string;
   parentId?: string;
+  base64image?: string;
 }
 
 export interface CreateProjectHandlerResponse {
@@ -42,8 +55,7 @@ export const createProjectHandler = async (
   req: TypedRequestBody<CreateProjectHandlerRequest>,
   res: TypedResponse<CreateProjectHandlerResponse>,
 ) => {
-  const { name, parentId } = req.body;
-
+  const { name, parentId, base64image } = req.body;
   try {
     const project = await prisma.project.create({
       data: {
