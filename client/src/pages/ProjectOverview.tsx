@@ -40,27 +40,12 @@ export const ProjectOverview = () => {
             formData.append(key, value)
         }
 
-        return await fetch(url, {
-            method: "POST",
-            body: formData
-        })
 
-    }
-
-    const addProject = async () => {
         try {
-            const body: CreateProjectHandlerRequest = {
-                name: 'PROJECT 7',
-
-            }
-            const response = await fetch("http://localhost:3000/projects/", {
+            const response = await fetch(url, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body)
+                body: formData
             })
-
             const newProject: CreateProjectHandlerResponse = await response.json()
             console.log("STATUS: ", response.status)
             const newP = [...projects, newProject.project]
@@ -70,6 +55,7 @@ export const ProjectOverview = () => {
             console.error("Error: ", error)
         }
     }
+
 
     useEffect(() => {
         const apiCall = async () => {
@@ -87,10 +73,9 @@ export const ProjectOverview = () => {
             <Stack spacing={2}>
                 <div>Hello from Project Overview
                     <form onSubmit={handleSubmit}>
-                        <input name="projectImage" type="file" onChange={handleFileUploadChange} />
-                        <button type="submit">Upload</button>
+                        <input id="file" name="projectImage" type="file" onChange={handleFileUploadChange} />
+                        <button type="submit">Create Project</button>
                     </form>
-                    <button onClick={() => addProject()}>Add project</button>
                     {projects.map((i, idx) => {
                         return <Paper key={idx} sx={{ flexGrow: 1, padding: 2 }}>
                             <Grid container spacing={1} >
