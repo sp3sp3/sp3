@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Project } from '@prisma/client'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetProjectsHandlerResponse } from "../../../server/routes/projects"
+import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetProjectsHandlerResponse, ProjectWithDataBuffer } from "../../../server/routes/projects"
 import { Grid } from '@mui/material';
 
 export const ProjectOverview = () => {
-    const [projects, setProjects] = useState<GetProjectsHandlerResponse>([])
+    const [projects, setProjects] = useState<ProjectWithDataBuffer[]>([])
     const [file, setFile] = useState<File>()
 
     const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,23 +18,32 @@ export const ProjectOverview = () => {
 
     const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault()
-        const url = 'http://localhost:3000/projects/uploadImage'
+        const url = 'http://localhost:3000/projects/'
         const formData = new FormData()
+
+        const bodyFieldsForAddingProject: CreateProjectHandlerRequest = {
+            name: 'TEST NAME',
+            parentId: null,
+        }
+
         if (file) {
             console.log(new Blob([file], { type: 'application/octet-stream' }))
 
-            // formData.append('projectImage', file)
-            formData.append('projectId', '3')
-            formData.append('name', 'TEST NAME')
-            formData.append('projectImage', new Blob(
-                [file], { type: 'application/octet-stream' }
-            ))
-            return await fetch(url, {
-                method: "POST",
-                body: formData
-            })
+            formData.append('projectImage',
+                new Blob(
+                    [file], { type: 'application/octet-stream' }
+                ))
 
         }
+
+        for (const [key, value] of Object.entries(bodyFieldsForAddingProject)) {
+            formData.append(key, value)
+        }
+
+        return await fetch(url, {
+            method: "POST",
+            body: formData
+        })
 
     }
 
@@ -63,22 +71,10 @@ export const ProjectOverview = () => {
         }
     }
 
-    const arrayBufferToBase64 = (buffer: ArrayBufferLike) => {
-        let binary = ''
-        let bytes = new Uint8Array(buffer)
-        let len = bytes.byteLength
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i])
-        }
-
-        return btoa(binary)
-    }
-
-
     useEffect(() => {
         const apiCall = async () => {
             const response = await fetch("http://localhost:3000/projects")
-            const result: { "projects": Project[] } = await response.json()
+            const result: GetProjectsHandlerResponse = await response.json()
             console.log(result)
             setProjects(result.projects)
         }
@@ -96,21 +92,14 @@ export const ProjectOverview = () => {
                     </form>
                     <button onClick={() => addProject()}>Add project</button>
                     {projects.map((i, idx) => {
-                        let base64image: string = ''
-                        if (i.image) {
-                            const k = arrayBufferToBase64(i.image.data)
-
-                            base64image = `data:image/png;base64,${k}`
-                        }
-
                         return <Paper key={idx} sx={{ flexGrow: 1, padding: 2 }}>
                             <Grid container spacing={1} >
                                 <Grid item xs={5}>
                                     {i.name}
                                 </Grid>
                                 <Grid item xs={7}>
-                                    {i.image ?
-                                        <img src={base64image} alt="image" /> : null}
+                                    {i.base64image ?
+                                        <img src={`data:image/png;base64,${i.base64image}`} alt="image" /> : null}
                                 </Grid>
                             </Grid>
                         </Paper>
