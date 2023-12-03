@@ -1,51 +1,83 @@
-import { useEffect, useState } from 'react'
-import { Project } from '@prisma/client'
+import React, { SyntheticEvent, useEffect, useState } from 'react'
 import Stack from '@mui/material/Stack'
-import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import { CreateProjectHandlerRequest, CreateProjectHandlerResponse } from "../../../server/routes/projects"
-
-const Item = styled(Paper)(({ theme }) => ({
-    backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-    ...theme.typography.body2,
-    padding: theme.spacing(5),
-    textAlign: 'left',
-    color: theme.palette.text.primary
-
-}));
+import Container from '@mui/material/Paper';
+import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetProjectsHandlerResponse, ProjectWithDataBuffer } from "../../../server/routes/projects"
+import { Button, Dialog, Grid } from '@mui/material';
+import { CreateProjectDialog } from '../components/CreateProjectDialog';
 
 export const ProjectOverview = () => {
-    const [projects, setProjects] = useState<Project[]>([])
+    const [projects, setProjects] = useState<ProjectWithDataBuffer[]>([])
+    const [file, setFile] = useState<File>()
+    const [open, setOpen] = useState(false)
 
-    const addProject = async () => {
+    const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = (event.target as HTMLInputElement).files
+        if (files && files[0]) {
+            setFile(() => files[0])
+        }
+    }
+
+    const handleClearFile = (event: SyntheticEvent) => {
+        event.preventDefault()
+        setFile(undefined)
+    }
+
+    const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const url = 'http://localhost:3000/projects/'
+        const formData = new FormData()
+
+        const bodyFieldsForAddingProject: CreateProjectHandlerRequest = {
+            name: 'TEST NAME',
+            parentId: null,
+        }
+
+        if (file) {
+            console.log(new Blob([file], { type: 'application/octet-stream' }))
+
+            formData.append('projectImage',
+                new Blob(
+                    [file], { type: 'application/octet-stream' }
+                ))
+
+        }
+
+        for (const [key, value] of Object.entries(bodyFieldsForAddingProject)) {
+            formData.append(key, value)
+        }
+
+
         try {
-            const body: CreateProjectHandlerRequest = {
-                name: 'PROJECT 7'
-            }
-            const response = await fetch("http://localhost:3000/projects/", {
+            const response = await fetch(url, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body)
+                body: formData
             })
             const newProject: CreateProjectHandlerResponse = await response.json()
             console.log("STATUS: ", response.status)
             const newP = [...projects, newProject.project]
             console.log(newProject)
             setProjects(newP)
+            setOpen(false)
+            setFile(undefined)
         } catch (error) {
             console.error("Error: ", error)
         }
+    }
+
+    const openCreateProjectDialog = () => {
+        setOpen(true)
+    }
+
+    const closeCreateProjectDialog = () => {
+        setOpen(false)
     }
 
 
     useEffect(() => {
         const apiCall = async () => {
             const response = await fetch("http://localhost:3000/projects")
-            const result: { "projects": Project[] } = await response.json()
-            console.log(result)
+            const result: GetProjectsHandlerResponse = await response.json()
             setProjects(result.projects)
         }
 
@@ -53,18 +85,42 @@ export const ProjectOverview = () => {
     }, [])
 
     return (
-        <Box sx={{ width: '100%' }}>
-            <Stack spacing={2}>
-                <div>Hello from Project Overview
-                    <button onClick={() => addProject()}>Add project</button>
-                    {projects.map((i, idx) =>
-                        <Item key={idx}>
-                            {i.name}
-                        </Item>
+        <Box sx={{ width: '100%', padding: 1 }}>
+            <div>
+                Projects
+                <Button variant="outlined"
+                    onClick={openCreateProjectDialog}>
+                    Create project
+                </Button>
+                <Dialog open={open} onClose={closeCreateProjectDialog}>
+                    <CreateProjectDialog
+                        file={file?.name}
+                        handleClearFile={handleClearFile}
+                        handleFileUploadChange={handleFileUploadChange}
+                        handleSubmit={handleSubmit} />
+                </Dialog>
+                <Stack spacing={1} sx={{ width: '50%' }}>
+                    {projects.map((i, idx) => {
+                        return <Container key={idx} variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
+                            <Grid container>
+                                <Grid item xs={5}>
+                                    <Grid>
+                                        {i.name}
+                                    </Grid>
+                                    <Grid>Another info</Grid>
+                                </Grid>
+                                <Grid>
+                                    {i.base64image ?
+                                        <img src={`data:image/png;base64,${i.base64image}`} alt="image" /> : null}
+                                </Grid>
+                            </Grid>
+                        </Container>
+                    }
+
                     )}
-                </div>
-            </Stack>
-        </Box>
+                </Stack>
+            </div>
+        </Box >
     )
 
 }

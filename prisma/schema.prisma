@@ -16,4 +16,6 @@ model Project {
   parentId Int?
   parent   Project?  @relation("ParentChild", fields: [parentId], references: [id])
   children Project[] @relation("ParentChild")
+  // base64image String?
+  image    Bytes?
 }

@@ -1,7 +1,7 @@
 import { ButtonAppBar } from './components/ButtonAppBar'
 import { ProjectOverview } from './pages/ProjectOverview'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-// import './index.css'
+import CssBaseline from '@mui/material/CssBaseline';
 
 
 import { ThemeOptions } from '@mui/material/styles';
@@ -15,6 +15,13 @@ export const themeOptions: ThemeOptions = {
         secondary: {
             main: '#f50057',
         },
+        background: {
+            default: "#fff"
+        },
+        text: {
+            primary: "#000001de",
+            secondary: "#00000099",
+        }
     },
     typography: {
         // fontFamily: 'Roboto Mono',
@@ -27,8 +34,10 @@ function App() {
     return (
         <>
             <ThemeProvider theme={theme}>
-                <ButtonAppBar />
-                <ProjectOverview />
+                <CssBaseline>
+                    <ButtonAppBar />
+                    <ProjectOverview />
+                </CssBaseline>
             </ThemeProvider>
         </>
     )
