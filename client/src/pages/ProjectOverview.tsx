@@ -1,19 +1,26 @@
-import { useEffect, useState } from 'react'
+import React, { SyntheticEvent, useEffect, useState } from 'react'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
+import Container from '@mui/material/Paper';
 import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetProjectsHandlerResponse, ProjectWithDataBuffer } from "../../../server/routes/projects"
-import { Grid } from '@mui/material';
+import { Button, Dialog, Grid } from '@mui/material';
+import { CreateProjectDialog } from '../components/CreateProjectDialog';
 
 export const ProjectOverview = () => {
     const [projects, setProjects] = useState<ProjectWithDataBuffer[]>([])
     const [file, setFile] = useState<File>()
+    const [open, setOpen] = useState(false)
 
     const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = (event.target as HTMLInputElement).files
         if (files && files[0]) {
             setFile(() => files[0])
         }
+    }
+
+    const handleClearFile = (event: SyntheticEvent) => {
+        event.preventDefault()
+        setFile(undefined)
     }
 
     const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -51,9 +58,19 @@ export const ProjectOverview = () => {
             const newP = [...projects, newProject.project]
             console.log(newProject)
             setProjects(newP)
+            setOpen(false)
+            setFile(undefined)
         } catch (error) {
             console.error("Error: ", error)
         }
+    }
+
+    const openCreateProjectDialog = () => {
+        setOpen(true)
+    }
+
+    const closeCreateProjectDialog = () => {
+        setOpen(false)
     }
 
 
@@ -61,7 +78,6 @@ export const ProjectOverview = () => {
         const apiCall = async () => {
             const response = await fetch("http://localhost:3000/projects")
             const result: GetProjectsHandlerResponse = await response.json()
-            console.log(result)
             setProjects(result.projects)
         }
 
@@ -69,30 +85,41 @@ export const ProjectOverview = () => {
     }, [])
 
     return (
-        <Box sx={{ width: '100%' }}>
-            <Stack spacing={2}>
-                <div>Hello from Project Overview
-                    <form onSubmit={handleSubmit}>
-                        <input id="file" name="projectImage" type="file" onChange={handleFileUploadChange} />
-                        <button type="submit">Create Project</button>
-                    </form>
+        <Box sx={{ width: '100%', padding: 1 }}>
+            <div>
+                Projects
+                <Button variant="outlined"
+                    onClick={openCreateProjectDialog}>
+                    Create project
+                </Button>
+                <Dialog open={open} onClose={closeCreateProjectDialog}>
+                    <CreateProjectDialog
+                        file={file?.name}
+                        handleClearFile={handleClearFile}
+                        handleFileUploadChange={handleFileUploadChange}
+                        handleSubmit={handleSubmit} />
+                </Dialog>
+                <Stack spacing={1} sx={{ width: '50%' }}>
                     {projects.map((i, idx) => {
-                        return <Paper key={idx} sx={{ flexGrow: 1, padding: 2 }}>
-                            <Grid container spacing={1} >
+                        return <Container key={idx} variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
+                            <Grid container>
                                 <Grid item xs={5}>
-                                    {i.name}
+                                    <Grid>
+                                        {i.name}
+                                    </Grid>
+                                    <Grid>Another info</Grid>
                                 </Grid>
-                                <Grid item xs={7}>
+                                <Grid>
                                     {i.base64image ?
                                         <img src={`data:image/png;base64,${i.base64image}`} alt="image" /> : null}
                                 </Grid>
                             </Grid>
-                        </Paper>
+                        </Container>
                     }
 
                     )}
-                </div>
-            </Stack>
+                </Stack>
+            </div>
         </Box >
     )
 
