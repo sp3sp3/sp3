@@ -29,7 +29,6 @@ export const ProjectOverview = () => {
 
         const bodyFieldsForAddingProject: CreateProjectHandlerRequest = {
             name: 'TEST NAME',
-            parentId: null,
         }
 
         if (file) {

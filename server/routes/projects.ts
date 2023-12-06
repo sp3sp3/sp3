@@ -60,7 +60,7 @@ export const getProjectByIdHandler = async (
 
 export interface CreateProjectHandlerRequest {
   name: string;
-  parentId: string | null;
+  parentId?: string;
   file?: Express.Multer.File;
 }
 
@@ -93,55 +93,16 @@ export const createProjectHandler = async (
   }
 };
 
-const resizeFile = async (pathToImage: string) => {
+export const resizeFile = async (pathToImage: string) => {
   const buffer = await sharp(pathToImage)
     .resize(300, 300, {
       fit: sharp.fit.inside,
       withoutEnlargement: true,
     })
     .toBuffer();
-  // return buffer.toString("base64");
   return buffer;
 };
-
-// export interface UploadImageHandlerRequest {
-//   // the fields within body
-//   projectId: string;
-// }
-//
-// export interface UploadImageHandlerResponse {
-//   base64Image: string;
-// }
-
-// export const uploadImageToProjectHandler = async (
-//   req: TypedRequestBody<UploadImageHandlerRequest>,
-//   _: TypedResponse<UploadImageHandlerResponse>,
-// ) => {
-//   // multer middleware will handle req.file field. file in the body is
-//   // something else it seems, undefined
-//   const img = req.file;
-//   const projectId = Number(req.body.projectId);
-//   console.log(req.body);
-//   if (img) {
-//     // const base64image = await resizeFile(img.path);
-//     const fileBuffer = await resizeFile(img.path);
-//     await prisma.project.update({
-//       where: {
-//         id: projectId,
-//       },
-//       data: {
-//         // base64image: `data:image/png;base64,${base64image}`,
-//         image: fileBuffer,
-//       },
-//     });
-//   }
-// };
 
 projectRoutes.get("/", getProjectsHandler);
 projectRoutes.get("/:id", getProjectByIdHandler);
 projectRoutes.post("/", upload.single("projectImage"), createProjectHandler);
-// projectRoutes.post(
-//   "/uploadImage",
-//   upload.single("projectImage"),
-//   uploadImageToProjectHandler,
-// );

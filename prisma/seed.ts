@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import { resizeFile } from "../server/routes/projects";
+import path from "path";
 
 const prisma = new PrismaClient();
-
 const seedProjects = async () => {
   let projects = [
     {
@@ -10,10 +11,28 @@ const seedProjects = async () => {
     },
     { name: "Pyridine synthesis", id: 2 },
     // seed sub projects
-    { name: "synthesis of XYZ", parentId: 1, id: 3 },
+    {
+      name: "synthesis of XYZ-1",
+      parentId: 1,
+      id: 3,
+      image: await resizeFile(
+        path.resolve(__dirname, "../server/tests/Gefitinib_structure.png"),
+      ),
+    },
+    {
+      name: "synthesis of XYZ-2",
+      parentId: 1,
+      id: 6,
+      image: await resizeFile(
+        path.resolve(__dirname, "../server/tests/gefitinib_analog.png"),
+      ),
+    },
+    { name: "Pd catalysts", parentId: 2, id: 8 },
     // sub sub project
     { name: "synthesis of step 1 - bromination", parentId: 3, id: 4 },
-    { name: "screening catalysts", parentId: 4, id: 5 },
+    { name: "synthesis of step 2 - amide coupling", parentId: 3, id: 5 },
+    { name: "screening catalysts", parentId: 4, id: 7 },
+    { name: "screening ligands", parentId: 8, id: 9 },
   ];
 
   for (const p of projects) {
