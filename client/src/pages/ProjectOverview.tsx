@@ -1,9 +1,8 @@
 import React, { SyntheticEvent, useEffect, useState } from 'react'
 import Stack from '@mui/material/Stack'
-import Box from '@mui/material/Box';
 import Container from '@mui/material/Paper';
 import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetProjectsHandlerResponse, ProjectWithDataBuffer } from "../../../server/routes/projects"
-import { Button, Dialog, Grid } from '@mui/material';
+import { Box, Button, Card, CardContent, Dialog, Divider, Typography } from '@mui/material';
 import { CreateProjectDialog } from '../components/CreateProjectDialog';
 
 export const ProjectOverview = () => {
@@ -85,42 +84,50 @@ export const ProjectOverview = () => {
     }, [])
 
     return (
-        <Box sx={{ width: '100%', padding: 1 }}>
-            <div>
-                Projects
-                <Button variant="outlined"
-                    onClick={openCreateProjectDialog}>
-                    Create project
-                </Button>
-                <Dialog open={open} onClose={closeCreateProjectDialog}>
-                    <CreateProjectDialog
-                        file={file?.name}
-                        handleClearFile={handleClearFile}
-                        handleFileUploadChange={handleFileUploadChange}
-                        handleSubmit={handleSubmit} />
-                </Dialog>
+        <>
+            <Stack direction="row" padding={2}>
+                <Card variant="outlined">
+                    <CardContent>
+                        <Typography variant="h5" textAlign="center">Projects</Typography>
+                    </CardContent>
+                    <Divider />
+                    <Box padding={2}>
+                        <Button variant="outlined"
+                            onClick={openCreateProjectDialog}>
+                            Create project
+                        </Button>
+                    </Box>
+                </Card>
+                <Stack spacing={10} marginRight={2}>
+                </Stack>
                 <Stack spacing={1} sx={{ width: '50%' }}>
                     {projects.map((i, idx) => {
                         return <Container key={idx} variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
-                            <Grid container>
-                                <Grid item xs={5}>
-                                    <Grid>
+                            <Stack direction="row" spacing={10}>
+                                <Stack spacing={2}>
+                                    <Stack>
                                         {i.name}
-                                    </Grid>
-                                    <Grid>Another info</Grid>
-                                </Grid>
-                                <Grid>
+                                    </Stack>
+                                    <Stack>Another info</Stack>
+                                </Stack>
+                                <Stack>
                                     {i.base64image ?
                                         <img src={`data:image/png;base64,${i.base64image}`} alt="image" /> : null}
-                                </Grid>
-                            </Grid>
+                                </Stack>
+                            </Stack>
                         </Container>
                     }
 
                     )}
                 </Stack>
-            </div>
-        </Box >
+            </Stack >
+            <Dialog open={open} onClose={closeCreateProjectDialog}>
+                <CreateProjectDialog
+                    file={file?.name}
+                    handleClearFile={handleClearFile}
+                    handleFileUploadChange={handleFileUploadChange}
+                    handleSubmit={handleSubmit} />
+            </Dialog>
+        </>
     )
-
 }
