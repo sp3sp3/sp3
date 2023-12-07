@@ -74,6 +74,20 @@ describe("projects handlers", () => {
             name: "EGFR inhibitors",
             parentId: null,
             base64image: null,
+            children: [
+              {
+                id: 3,
+                name: "synthesis of XYZ-1",
+                parentId: 1,
+                base64image: expect.any(String),
+              },
+              {
+                name: "synthesis of XYZ-2",
+                parentId: 1,
+                id: 6,
+                base64image: expect.any(String),
+              },
+            ],
           },
         };
 

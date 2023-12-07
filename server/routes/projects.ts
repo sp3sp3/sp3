@@ -10,16 +10,30 @@ export const projectRoutes = Router();
 
 const prisma = new PrismaClient();
 
-const project2ProjectWithDataBuffer = (project: Project) => {
-  const { image, ...rest } = project;
-  return {
-    ...rest,
-    base64image: image ? image.toString("base64") : null,
-  };
+const project2ProjectWithDataBuffer = (
+  project: Project & { children?: Project[] },
+): ProjectWithDataBuffer => {
+  const { image, children, ...rest } = project;
+  if (children) {
+    const processedChildren = children.map((i) =>
+      project2ProjectWithDataBuffer(i),
+    );
+    return {
+      ...rest,
+      children: processedChildren,
+      base64image: image ? image.toString("base64") : null,
+    };
+  } else {
+    return {
+      ...rest,
+      base64image: image ? image.toString("base64") : null,
+    };
+  }
 };
 
 export type ProjectWithDataBuffer = Omit<Project, "image"> & {
   base64image: string | null;
+  children?: ProjectWithDataBuffer[];
 };
 
 export interface GetProjectsHandlerResponse {
@@ -49,6 +63,7 @@ export const getProjectByIdHandler = async (
 ) => {
   const project = await prisma.project.findUnique({
     where: { id: Number(req.params.id) },
+    include: { children: true },
   });
 
   if (!project) {
