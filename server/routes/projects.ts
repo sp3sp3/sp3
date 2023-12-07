@@ -36,15 +36,15 @@ export type ProjectWithDataBuffer = Omit<Project, "image"> & {
   children?: ProjectWithDataBuffer[];
 };
 
-export interface GetProjectsHandlerResponse {
+export interface GetTopLevelProjectsHandlerResponse {
   projects: ProjectWithDataBuffer[];
 }
 
-export const getProjectsHandler = async (
+export const getTopLevelProjectsHandler = async (
   _: TypedRequestBody<{}>,
-  res: TypedResponse<GetProjectsHandlerResponse>,
+  res: TypedResponse<GetTopLevelProjectsHandlerResponse>,
 ) => {
-  const projects = await prisma.project.findMany({});
+  const projects = await prisma.project.findMany({ where: { parentId: null } });
   const result = projects.map((i) => project2ProjectWithDataBuffer(i));
   res.json({ projects: result });
 };
@@ -118,6 +118,6 @@ export const resizeFile = async (pathToImage: string) => {
   return buffer;
 };
 
-projectRoutes.get("/", getProjectsHandler);
+projectRoutes.get("/", getTopLevelProjectsHandler);
 projectRoutes.get("/:id", getProjectByIdHandler);
 projectRoutes.post("/", upload.single("projectImage"), createProjectHandler);
