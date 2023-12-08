@@ -1,7 +1,7 @@
 import React, { SyntheticEvent, useEffect, useState } from 'react'
 import Stack from '@mui/material/Stack'
 import Container from '@mui/material/Paper';
-import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetProjectsHandlerResponse, ProjectWithDataBuffer } from "../../../server/routes/projects"
+import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, GetTopLevelProjectsHandlerResponse, ProjectWithDataBuffer } from "../../../server/routes/projects"
 import { Box, Button, Card, CardContent, Dialog, Divider, Typography } from '@mui/material';
 import { CreateProjectDialog } from '../components/CreateProjectDialog';
 
@@ -75,7 +75,7 @@ export const ProjectOverview = () => {
     useEffect(() => {
         const apiCall = async () => {
             const response = await fetch("http://localhost:3000/projects")
-            const result: GetProjectsHandlerResponse = await response.json()
+            const result: GetTopLevelProjectsHandlerResponse = await response.json()
             setProjects(result.projects)
         }
 
