@@ -58,7 +58,7 @@ describe("projects handlers", () => {
       const result: SupertestResponse<{ projects: Project[] }> =
         await supertest(server).get("/projects");
       expect(result.statusCode).toEqual(200);
-      expect(result.body.projects).toHaveLength(5);
+      expect(result.body.projects).toHaveLength(9);
       expect(result.body.projects[0]).toHaveProperty("name");
       expect(result.body.projects[0]).toHaveProperty("parentId");
       expect(result.body.projects[0]).toHaveProperty("base64image");
@@ -74,6 +74,20 @@ describe("projects handlers", () => {
             name: "EGFR inhibitors",
             parentId: null,
             base64image: null,
+            children: [
+              {
+                id: 3,
+                name: "synthesis of XYZ-1",
+                parentId: 1,
+                base64image: expect.any(String),
+              },
+              {
+                name: "synthesis of XYZ-2",
+                parentId: 1,
+                id: 6,
+                base64image: expect.any(String),
+              },
+            ],
           },
         };
 

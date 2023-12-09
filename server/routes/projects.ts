@@ -10,27 +10,41 @@ export const projectRoutes = Router();
 
 const prisma = new PrismaClient();
 
-const project2ProjectWithDataBuffer = (project: Project) => {
-  const { image, ...rest } = project;
-  return {
-    ...rest,
-    base64image: image ? image.toString("base64") : null,
-  };
+const project2ProjectWithDataBuffer = (
+  project: Project & { children?: Project[] },
+): ProjectWithDataBuffer => {
+  const { image, children, ...rest } = project;
+  if (children) {
+    const processedChildren = children.map((i) =>
+      project2ProjectWithDataBuffer(i),
+    );
+    return {
+      ...rest,
+      children: processedChildren,
+      base64image: image ? image.toString("base64") : null,
+    };
+  } else {
+    return {
+      ...rest,
+      base64image: image ? image.toString("base64") : null,
+    };
+  }
 };
 
 export type ProjectWithDataBuffer = Omit<Project, "image"> & {
   base64image: string | null;
+  children?: ProjectWithDataBuffer[];
 };
 
-export interface GetProjectsHandlerResponse {
+export interface GetTopLevelProjectsHandlerResponse {
   projects: ProjectWithDataBuffer[];
 }
 
-export const getProjectsHandler = async (
+export const getTopLevelProjectsHandler = async (
   _: TypedRequestBody<{}>,
-  res: TypedResponse<GetProjectsHandlerResponse>,
+  res: TypedResponse<GetTopLevelProjectsHandlerResponse>,
 ) => {
-  const projects = await prisma.project.findMany({});
+  const projects = await prisma.project.findMany({ where: { parentId: null } });
   const result = projects.map((i) => project2ProjectWithDataBuffer(i));
   res.json({ projects: result });
 };
@@ -49,6 +63,7 @@ export const getProjectByIdHandler = async (
 ) => {
   const project = await prisma.project.findUnique({
     where: { id: Number(req.params.id) },
+    include: { children: true },
   });
 
   if (!project) {
@@ -60,7 +75,7 @@ export const getProjectByIdHandler = async (
 
 export interface CreateProjectHandlerRequest {
   name: string;
-  parentId: string | null;
+  parentId?: string;
   file?: Express.Multer.File;
 }
 
@@ -93,55 +108,16 @@ export const createProjectHandler = async (
   }
 };
 
-const resizeFile = async (pathToImage: string) => {
+export const resizeFile = async (pathToImage: string) => {
   const buffer = await sharp(pathToImage)
     .resize(300, 300, {
       fit: sharp.fit.inside,
       withoutEnlargement: true,
     })
     .toBuffer();
-  // return buffer.toString("base64");
   return buffer;
 };
 
-// export interface UploadImageHandlerRequest {
-//   // the fields within body
-//   projectId: string;
-// }
-//
-// export interface UploadImageHandlerResponse {
-//   base64Image: string;
-// }
-
-// export const uploadImageToProjectHandler = async (
-//   req: TypedRequestBody<UploadImageHandlerRequest>,
-//   _: TypedResponse<UploadImageHandlerResponse>,
-// ) => {
-//   // multer middleware will handle req.file field. file in the body is
-//   // something else it seems, undefined
-//   const img = req.file;
-//   const projectId = Number(req.body.projectId);
-//   console.log(req.body);
-//   if (img) {
-//     // const base64image = await resizeFile(img.path);
-//     const fileBuffer = await resizeFile(img.path);
-//     await prisma.project.update({
-//       where: {
-//         id: projectId,
-//       },
-//       data: {
-//         // base64image: `data:image/png;base64,${base64image}`,
-//         image: fileBuffer,
-//       },
-//     });
-//   }
-// };
-
-projectRoutes.get("/", getProjectsHandler);
+projectRoutes.get("/", getTopLevelProjectsHandler);
 projectRoutes.get("/:id", getProjectByIdHandler);
 projectRoutes.post("/", upload.single("projectImage"), createProjectHandler);
-// projectRoutes.post(
-//   "/uploadImage",
-//   upload.single("projectImage"),
-//   uploadImageToProjectHandler,
-// );
