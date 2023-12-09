@@ -73,6 +73,10 @@ export const getProjectByIdHandler = async (
   }
 };
 
+export const getPathToProject = async () => {
+    const 
+}
+
 export interface CreateProjectHandlerRequest {
   name: string;
   parentId?: string;

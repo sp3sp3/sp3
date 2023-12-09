@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Box, Button, ButtonBase, Card, CardContent, Dialog, Divider, Typography } from '@mui/material';
+import { Button, ButtonBase, Card, CardContent, Dialog, Divider, Typography } from '@mui/material';
 import Stack from '@mui/material/Stack'
 import Container from '@mui/material/Paper';
 import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, ProjectWithDataBuffer } from '../../../server/routes/projects';
@@ -10,10 +10,11 @@ interface Props {
     projects: ProjectWithDataBuffer[]
     setProjects: Dispatch<SetStateAction<ProjectWithDataBuffer[]>>
     title: string
+    pathToProject?: { id: number, name: string }[]
 }
 
 
-export const ProjectStack = ({ title, projects, setProjects }: Props) => {
+export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Props) => {
     const [file, setFile] = useState<File>()
     const [open, setOpen] = useState(false)
 
@@ -85,13 +86,31 @@ export const ProjectStack = ({ title, projects, setProjects }: Props) => {
                         <Typography variant="h5" textAlign="center">{title}</Typography>
                     </CardContent>
                     <Divider />
-                    <Box padding={2}>
+                    <Stack>
                         <Button variant="outlined"
                             onClick={openCreateProjectDialog}>
-                            Create project
+                            CREATE NEW
                         </Button>
-                    </Box>
-                </Card>
+                        {/* "Breadcrumb" */}
+                        {pathToProject ?
+                            <Stack marginTop={1}
+                                divider={
+                                    <Divider
+                                        orientation="horizontal" />}
+                            >
+                                {pathToProject.map((i, idx) => {
+                                    console.log(i.id)
+                                    return (
+                                        <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`}>
+                                            {i.name}
+                                        </ButtonBase>
+                                    )
+                                })}
+                            </Stack>
+                            : null
+                        }
+                    </Stack>
+                </Card >
                 <Stack spacing={10} marginRight={2}>
                 </Stack>
                 <Stack spacing={1} sx={{ width: '50%' }}>
