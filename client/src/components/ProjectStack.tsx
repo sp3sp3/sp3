@@ -92,14 +92,17 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
                             CREATE NEW
                         </Button>
                         {/* "Breadcrumb" */}
-                        {pathToProject ?
+                        {pathToProject && pathToProject.length > 0 ?
                             <Stack marginTop={1}
                                 divider={
                                     <Divider
-                                        orientation="horizontal" />}
+                                        orientation="horizontal" />
+                                }
                             >
+                                <Typography variant="caption" textAlign="center">
+                                    Back to:
+                                </Typography>
                                 {pathToProject.map((i, idx) => {
-                                    console.log(i.id)
                                     return (
                                         <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`}>
                                             {i.name}
@@ -114,7 +117,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
                 <Stack spacing={10} marginRight={2}>
                 </Stack>
                 <Stack spacing={1} sx={{ width: '50%' }}>
-                    {projects.map((i, idx) => {
+                    {projects.length > 0 ? projects.map((i, idx) => {
                         return (
                             <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`} >
                                 <Container variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
@@ -123,7 +126,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
                                             <Stack>
                                                 {i.name}
                                             </Stack>
-                                            <Stack>Another info</Stack>
+                                            {/*<Stack>Another info</Stack>*/}
                                         </Stack>
                                         <Stack>
                                             {i.base64image ?
@@ -133,9 +136,12 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
                                 </Container>
                             </ButtonBase>
                         )
+                    })
+                        :
+                        <Container variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
+                            No projects or experiments yet
+                        </Container>
                     }
-
-                    )}
                 </Stack>
             </Stack >
             <Dialog open={open} onClose={closeCreateProjectDialog}>
