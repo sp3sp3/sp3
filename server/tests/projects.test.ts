@@ -54,14 +54,16 @@ describe("projects handlers", () => {
     //   expect(res.json).toHaveBeenCalledWith(expectedResult);
     // });
 
-    test("GET /projects", async () => {
-      const result: SupertestResponse<{ projects: Project[] }> =
-        await supertest(server).get("/projects");
-      expect(result.statusCode).toEqual(200);
-      expect(result.body.projects).toHaveLength(9);
-      expect(result.body.projects[0]).toHaveProperty("name");
-      expect(result.body.projects[0]).toHaveProperty("parentId");
-      expect(result.body.projects[0]).toHaveProperty("base64image");
+    describe("GET /projects", () => {
+      test("returns top level projects", async () => {
+        const result: SupertestResponse<{ projects: Project[] }> =
+          await supertest(server).get("/projects");
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.projects).toHaveLength(2);
+        expect(result.body.projects[0]).toHaveProperty("name");
+        expect(result.body.projects[0]).toHaveProperty("parentId");
+        expect(result.body.projects[0]).toHaveProperty("base64image");
+      });
     });
 
     describe("GET /:id", () => {
@@ -97,6 +99,45 @@ describe("projects handlers", () => {
 
       test("returns 404 if project cannot be found", async () => {
         await supertest(server).get("/projects/10000").expect(404);
+      });
+    });
+
+    describe("GET /pathToProject/:id", () => {
+      test("retuns path to project -- root to leaf", async () => {
+        const result = await supertest(server).get("/projects/pathToProject/5");
+
+        const expectedResult = {
+          path: [
+            {
+              id: 5,
+              name: "step 2 - amide coupling",
+              parentId: 3,
+            },
+            { id: 3, name: "synthesis of XYZ-1", parentId: 1 },
+            { id: 1, name: "EGFR inhibitors", parentId: null },
+          ],
+        };
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      test("returns path to project -- root to middle node", async () => {
+        const result = await supertest(server).get("/projects/pathToProject/3");
+
+        const expectedResult = {
+          path: [
+            { id: 3, name: "synthesis of XYZ-1", parentId: 1 },
+            { id: 1, name: "EGFR inhibitors", parentId: null },
+          ],
+        };
+
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      test("returns empty array if project not found", async () => {
+        const result = await supertest(server).get(
+          "/projects/pathToProject/100",
+        );
+        expect(result.body).toStrictEqual({ path: [] });
       });
     });
 

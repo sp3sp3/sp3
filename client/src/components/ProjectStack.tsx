@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Box, Button, ButtonBase, Card, CardContent, Dialog, Divider, Typography } from '@mui/material';
+import { Button, ButtonBase, Card, CardContent, Dialog, Divider, Typography } from '@mui/material';
 import Stack from '@mui/material/Stack'
 import Container from '@mui/material/Paper';
 import { CreateProjectHandlerRequest, CreateProjectHandlerResponse, ProjectWithDataBuffer } from '../../../server/routes/projects';
@@ -10,10 +10,11 @@ interface Props {
     projects: ProjectWithDataBuffer[]
     setProjects: Dispatch<SetStateAction<ProjectWithDataBuffer[]>>
     title: string
+    pathToProject?: { id: number, name: string }[]
 }
 
 
-export const ProjectStack = ({ title, projects, setProjects }: Props) => {
+export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Props) => {
     const [file, setFile] = useState<File>()
     const [open, setOpen] = useState(false)
 
@@ -85,17 +86,38 @@ export const ProjectStack = ({ title, projects, setProjects }: Props) => {
                         <Typography variant="h5" textAlign="center">{title}</Typography>
                     </CardContent>
                     <Divider />
-                    <Box padding={2}>
+                    <Stack>
                         <Button variant="outlined"
                             onClick={openCreateProjectDialog}>
-                            Create project
+                            CREATE NEW
                         </Button>
-                    </Box>
-                </Card>
+                        {/* "Breadcrumb" */}
+                        {pathToProject && pathToProject.length > 0 ?
+                            <Stack marginTop={1}
+                                divider={
+                                    <Divider
+                                        orientation="horizontal" />
+                                }
+                            >
+                                <Typography variant="caption" textAlign="center">
+                                    Back to:
+                                </Typography>
+                                {pathToProject.map((i, idx) => {
+                                    return (
+                                        <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`}>
+                                            {i.name}
+                                        </ButtonBase>
+                                    )
+                                })}
+                            </Stack>
+                            : null
+                        }
+                    </Stack>
+                </Card >
                 <Stack spacing={10} marginRight={2}>
                 </Stack>
                 <Stack spacing={1} sx={{ width: '50%' }}>
-                    {projects.map((i, idx) => {
+                    {projects.length > 0 ? projects.map((i, idx) => {
                         return (
                             <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`} >
                                 <Container variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
@@ -104,7 +126,7 @@ export const ProjectStack = ({ title, projects, setProjects }: Props) => {
                                             <Stack>
                                                 {i.name}
                                             </Stack>
-                                            <Stack>Another info</Stack>
+                                            {/*<Stack>Another info</Stack>*/}
                                         </Stack>
                                         <Stack>
                                             {i.base64image ?
@@ -114,9 +136,12 @@ export const ProjectStack = ({ title, projects, setProjects }: Props) => {
                                 </Container>
                             </ButtonBase>
                         )
+                    })
+                        :
+                        <Container variant="outlined" sx={{ flexGrow: 1, padding: 2 }}>
+                            No projects or experiments yet
+                        </Container>
                     }
-
-                    )}
                 </Stack>
             </Stack >
             <Dialog open={open} onClose={closeCreateProjectDialog}>
