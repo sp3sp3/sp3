@@ -102,6 +102,45 @@ describe("projects handlers", () => {
       });
     });
 
+    describe("GET /pathToProject/:id", () => {
+      test("retuns path to project -- root to leaf", async () => {
+        const result = await supertest(server).get("/projects/pathToProject/5");
+
+        const expectedResult = {
+          path: [
+            {
+              id: 5,
+              name: "synthesis of step 2 - amide coupling",
+              parentId: 3,
+            },
+            { id: 3, name: "synthesis of XYZ-1", parentId: 1 },
+            { id: 1, name: "EGFR inhibitors", parentId: null },
+          ],
+        };
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      test("returns path to project -- root to middle node", async () => {
+        const result = await supertest(server).get("/projects/pathToProject/3");
+
+        const expectedResult = {
+          path: [
+            { id: 3, name: "synthesis of XYZ-1", parentId: 1 },
+            { id: 1, name: "EGFR inhibitors", parentId: null },
+          ],
+        };
+
+        expect(result.body).toStrictEqual(expectedResult);
+      });
+
+      test("returns empty array if project not found", async () => {
+        const result = await supertest(server).get(
+          "/projects/pathToProject/100",
+        );
+        expect(result.body).toStrictEqual({ path: [] });
+      });
+    });
+
     describe("POST /", () => {
       test("creates a top level project", async () => {
         const payload: CreateProjectHandlerRequest = {

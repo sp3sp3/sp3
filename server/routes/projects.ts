@@ -73,9 +73,40 @@ export const getProjectByIdHandler = async (
   }
 };
 
-export const getPathToProject = async () => {
-    const 
+export interface GetPathToProjectHandlerRequest {
+  id: string;
 }
+
+export interface GetPathToProjectHandlerResponse {
+  path: { id: number; name: string; parentId: number }[];
+}
+
+// get the path from leaf to root of the requested project id
+export const getPathToProjectHandler = async (
+  req: TypedRequestBody<GetPathToProjectHandlerRequest>,
+  res: TypedResponse<GetPathToProjectHandlerResponse>,
+) => {
+  const result: { id: number; name: string; parentId: number }[] =
+    await prisma.$queryRaw`
+    WITH RECURSIVE path(id, name, "parentId") 
+    AS (SELECT id,
+        name,
+        "parentId"
+    FROM "Project"
+    WHERE id=${req.params.id}
+    UNION ALL 
+    SELECT p.id,
+            p.name, 
+            p."ParentId"
+    FROM path, "Project" p
+    WHERE p.id=path."parentId"
+    ) 
+    SELECT * FROM path;`;
+
+  res.json({
+    path: result,
+  });
+};
 
 export interface CreateProjectHandlerRequest {
   name: string;
@@ -123,5 +154,6 @@ export const resizeFile = async (pathToImage: string) => {
 };
 
 projectRoutes.get("/", getTopLevelProjectsHandler);
+projectRoutes.get("/pathToProject/:id", getPathToProjectHandler);
 projectRoutes.get("/:id", getProjectByIdHandler);
 projectRoutes.post("/", upload.single("projectImage"), createProjectHandler);
