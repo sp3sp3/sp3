@@ -39,11 +39,24 @@ const seedProjects = async () => {
       name: "step 2 - amide coupling",
       parentId: 2,
       id: 10,
+      image: await resizeFile(
+        path.resolve(__dirname, "../server/tests/amide.png"),
+      ),
     },
     // sub sub project
     { name: "step 1 - aryl coupling", parentId: 3, id: 4 },
     { name: "step 2 - amide coupling", parentId: 3, id: 5 },
     { name: "screening catalysts", parentId: 4, id: 7 },
+    {
+      name: "phenyl analogs",
+      parentId: 10,
+      id: 11,
+    },
+    {
+      name: "pyridine analogs",
+      parentId: 10,
+      id: 12,
+    },
   ];
 
   for (const p of projects) {
