@@ -110,7 +110,7 @@ describe("projects handlers", () => {
           path: [
             {
               id: 5,
-              name: "synthesis of step 2 - amide coupling",
+              name: "step 2 - amide coupling",
               parentId: 3,
             },
             { id: 3, name: "synthesis of XYZ-1", parentId: 1 },

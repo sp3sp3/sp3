@@ -9,7 +9,7 @@ const seedProjects = async () => {
       name: "EGFR inhibitors",
       id: 1,
     },
-    { name: "Pyridine synthesis", id: 2 },
+    { name: "ABCD inhibitors", id: 2 },
     // seed sub projects
     {
       name: "synthesis of XYZ-1",
@@ -27,12 +27,23 @@ const seedProjects = async () => {
         path.resolve(__dirname, "../server/tests/gefitinib_analog.png"),
       ),
     },
-    { name: "Pd catalysts", parentId: 2, id: 8 },
+    {
+      name: "step 1 - ether synthesis",
+      parentId: 2,
+      id: 8,
+      image: await resizeFile(
+        path.resolve(__dirname, "../server/tests/ether_synthesis.png"),
+      ),
+    },
+    {
+      name: "step 2 - amide coupling",
+      parentId: 2,
+      id: 10,
+    },
     // sub sub project
-    { name: "synthesis of step 1 - bromination", parentId: 3, id: 4 },
-    { name: "synthesis of step 2 - amide coupling", parentId: 3, id: 5 },
+    { name: "step 1 - aryl coupling", parentId: 3, id: 4 },
+    { name: "step 2 - amide coupling", parentId: 3, id: 5 },
     { name: "screening catalysts", parentId: 4, id: 7 },
-    { name: "screening ligands", parentId: 8, id: 9 },
   ];
 
   for (const p of projects) {
