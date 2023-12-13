@@ -1,0 +1,23 @@
+services:
+  server:
+    image: node:20
+    command: sh -c "npm install && npx prisma migrate deploy && npm run start-server"
+    ports: 
+      - 127.0.0.1:3000:3000
+    working_dir: /sp3
+    volumes:
+      - ./:/sp3
+      - ./your-db.db:/sp3/prisma/dev.db
+    environment:
+      DATABASE_URL: "file:./dev.db"
+
+
+  client: 
+    image: node:20
+    command: sh -c "npm install && npm run dev"
+    ports: 
+      - 127.0.0.1:5173:5173
+    working_dir: /client
+    volumes:
+      - ./client:/client
+
