@@ -11,10 +11,11 @@ interface Props {
     setProjects: Dispatch<SetStateAction<ProjectWithDataBuffer[]>>
     title: string
     pathToProject?: { id: number, name: string }[]
+    parentProjectId?: string
 }
 
 
-export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Props) => {
+export const ProjectStack = ({ parentProjectId, title, projects, pathToProject, setProjects }: Props) => {
     const [file, setFile] = useState<File>()
     const [open, setOpen] = useState(false)
     const [projectName, setProjectName] = useState('')
@@ -53,6 +54,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
 
         const bodyFieldsForAddingProject: CreateProjectHandlerRequest = {
             name: projectName,
+            parentId: parentProjectId ?? undefined
         }
 
         if (file) {
