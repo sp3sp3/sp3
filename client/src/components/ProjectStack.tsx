@@ -17,6 +17,7 @@ interface Props {
 export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Props) => {
     const [file, setFile] = useState<File>()
     const [open, setOpen] = useState(false)
+    const [projectName, setProjectName] = useState('')
 
     const openCreateProjectDialog = () => {
         setOpen(true)
@@ -24,6 +25,10 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
 
     const closeCreateProjectDialog = () => {
         setOpen(false)
+    }
+
+    const handleNameOnChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setProjectName(event.target.value)
     }
 
 
@@ -47,7 +52,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
         const formData = new FormData()
 
         const bodyFieldsForAddingProject: CreateProjectHandlerRequest = {
-            name: 'TEST NAME',
+            name: projectName,
         }
 
         if (file) {
@@ -147,6 +152,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
             <Dialog open={open} onClose={closeCreateProjectDialog}>
                 <CreateProjectDialog
                     file={file?.name}
+                    handleNameOnChange={handleNameOnChange}
                     handleClearFile={handleClearFile}
                     handleFileUploadChange={handleFileUploadChange}
                     handleSubmit={handleSubmit} />
