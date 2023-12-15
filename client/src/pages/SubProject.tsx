@@ -30,6 +30,7 @@ export const SubProjectPage = () => {
     return (
         <>
             <ProjectStack
+                parentProjectId={id}
                 title={title}
                 projects={subProjects}
                 setProjects={setSubProjects}

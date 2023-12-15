@@ -3,13 +3,13 @@ import { FormEventHandler, MouseEventHandler } from "react";
 
 interface Props {
     file?: string;
+    handleNameOnChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>
     handleClearFile: MouseEventHandler;
     handleSubmit: FormEventHandler<HTMLFormElement>;
     handleFileUploadChange: React.ChangeEventHandler<HTMLInputElement>
 }
 
-export const CreateProjectDialog = ({ file, handleClearFile, handleSubmit, handleFileUploadChange }: Props) => {
-
+export const CreateProjectDialog = ({ handleNameOnChange, file, handleClearFile, handleSubmit, handleFileUploadChange }: Props) => {
 
     return (
         <div>
@@ -23,7 +23,10 @@ export const CreateProjectDialog = ({ file, handleClearFile, handleSubmit, handl
                         margin="normal"
                         id="project-name"
                         fullWidth
-                        variant="standard" />
+                        variant="standard"
+                        onChange={(event) => {
+                            handleNameOnChange(event)
+                        }} />
                     <Button component="label" variant="contained">
                         {file ?
                             <Button variant="contained"

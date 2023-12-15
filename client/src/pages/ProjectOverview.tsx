@@ -17,7 +17,10 @@ export const ProjectOverview = () => {
 
     return (
         <>
-            <ProjectStack title={'Projects'} projects={projects} setProjects={setProjects} />
+            <ProjectStack
+                title={'Projects'}
+                projects={projects}
+                setProjects={setProjects} />
         </>
     )
 }

@@ -11,12 +11,37 @@ interface Props {
     setProjects: Dispatch<SetStateAction<ProjectWithDataBuffer[]>>
     title: string
     pathToProject?: { id: number, name: string }[]
+    parentProjectId?: string
 }
 
 
-export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Props) => {
+type BreadCrumbStackProps = { pathToProject: Props["pathToProject"] }
+const BreadCrumbStack = ({ pathToProject }: BreadCrumbStackProps) => {
+    if (pathToProject) {
+        return (
+            <Stack marginTop={1} divider={<Divider orientation="horizontal" />}>
+                <Typography variant="caption" textAlign="center">Back to:</Typography>
+                {pathToProject.length === 0 ?
+                    <ButtonBase component={Link} to={'/'}>Project Overview</ButtonBase>
+                    :
+                    pathToProject.map((i, idx) => {
+                        return (
+                            <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`}>
+                                {i.name}
+                            </ButtonBase>
+                        )
+                    })}
+            </Stack>
+        )
+    }
+    return null
+}
+
+
+export const ProjectStack = ({ parentProjectId, title, projects, pathToProject, setProjects }: Props) => {
     const [file, setFile] = useState<File>()
     const [open, setOpen] = useState(false)
+    const [projectName, setProjectName] = useState('')
 
     const openCreateProjectDialog = () => {
         setOpen(true)
@@ -24,6 +49,10 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
 
     const closeCreateProjectDialog = () => {
         setOpen(false)
+    }
+
+    const handleNameOnChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setProjectName(event.target.value)
     }
 
 
@@ -47,7 +76,8 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
         const formData = new FormData()
 
         const bodyFieldsForAddingProject: CreateProjectHandlerRequest = {
-            name: 'TEST NAME',
+            name: projectName,
+            parentId: parentProjectId ?? undefined
         }
 
         if (file) {
@@ -91,27 +121,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
                             onClick={openCreateProjectDialog}>
                             CREATE NEW
                         </Button>
-                        {/* "Breadcrumb" */}
-                        {pathToProject && pathToProject.length > 0 ?
-                            <Stack marginTop={1}
-                                divider={
-                                    <Divider
-                                        orientation="horizontal" />
-                                }
-                            >
-                                <Typography variant="caption" textAlign="center">
-                                    Back to:
-                                </Typography>
-                                {pathToProject.map((i, idx) => {
-                                    return (
-                                        <ButtonBase key={idx} component={Link} to={`/projects/${i.id}`}>
-                                            {i.name}
-                                        </ButtonBase>
-                                    )
-                                })}
-                            </Stack>
-                            : null
-                        }
+                        <BreadCrumbStack pathToProject={pathToProject} />
                     </Stack>
                 </Card >
                 <Stack spacing={10} marginRight={2}>
@@ -147,6 +157,7 @@ export const ProjectStack = ({ title, projects, pathToProject, setProjects }: Pr
             <Dialog open={open} onClose={closeCreateProjectDialog}>
                 <CreateProjectDialog
                     file={file?.name}
+                    handleNameOnChange={handleNameOnChange}
                     handleClearFile={handleClearFile}
                     handleFileUploadChange={handleFileUploadChange}
                     handleSubmit={handleSubmit} />
