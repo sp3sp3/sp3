@@ -14,6 +14,7 @@
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto-mono": "^5.0.15",
     "@mui/material": "^5.14.18",
+    "@rdkit/rdkit": "^2023.9.2-1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-image-file-resizer": "^0.4.8",
