@@ -1,5 +1,6 @@
 import { DialogContent, DialogTitle, TextField } from "@mui/material"
 import { useEffect, useState } from "react"
+import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 
 
 export const AddReagentDialog = () => {
@@ -14,6 +15,7 @@ export const AddReagentDialog = () => {
         // if there is no input
         if (smilesInput === '') {
             setHelperTextSMILES('')
+            setCanonicalSMILES('')
         } else {
             const mol = window.RDKit.get_mol(smilesInput)
             if (mol?.is_valid) {
@@ -47,6 +49,16 @@ export const AddReagentDialog = () => {
                     helperText={helperTextSMILES}
                     onChange={(event) => { setSMILESInput(event.target.value) }}
                 />
+                {canonicalSMILES ?
+                    <MoleculeStructure
+                        id="molecule-structure"
+                        structure={canonicalSMILES}
+                        width={150}
+                        height={150}
+                        svgMode
+                    />
+                    : null
+                }
                 <TextField
                     label="Molecule name"
                     autoFocus
