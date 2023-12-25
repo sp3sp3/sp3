@@ -41,7 +41,6 @@ const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
                     setMolecularWeight(undefined)
                 }
             } else {
-                console.log(molecularWeight)
                 setHelperText(`MW: ${molecularWeight}`)
             }
         }
@@ -98,10 +97,8 @@ const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
                                 setCanonicalSMILES('')
                             }
                             const result: PubChemResponse = await response.json()
-                            console.log("RESPONSE: ", result.PropertyTable)
                             const pcProperties = result.PropertyTable.Properties[0]
                             const pubchemSMILES = pcProperties.CanonicalSMILES
-                            console.log(pubchemSMILES)
 
                             setMolecularWeight(Number(pcProperties.MolecularWeight))
                             const mol = window.RDKit.get_mol(pubchemSMILES)
