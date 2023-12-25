@@ -124,9 +124,11 @@ const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
     )
 }
 
+// TODO: pass the information back up to parent to make request to backend
 
 export const AddReagentDialog = () => {
     const [eq, setEq] = useState<number>()
+    const [eqHelperText, setEqHelperText] = useState<string>('')
 
     const [moleculeInputType, setMoleculeInputType] = useState<string>('SMILES')
 
@@ -166,10 +168,16 @@ export const AddReagentDialog = () => {
                     id="equivalents"
                     fullWidth
                     variant="standard"
+                    helperText={eqHelperText}
                     onChange={(event) => {
                         const val = event.target.value
-                        let numVal
-                        console.log(!Number.isNaN(val))
+                        const numVal = Number(val)
+                        if (isNaN(numVal)) {
+                            setEqHelperText("Please enter a valid number without commas, and use a decimal point if needed")
+                        } else {
+                            setEqHelperText("")
+                        }
+
                         setEq(numVal)
                     }}
                 />
