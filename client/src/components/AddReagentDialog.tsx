@@ -1,25 +1,29 @@
 import { Button, DialogContent, DialogTitle, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material"
-import { useEffect, useState } from "react"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 
 
 interface MoleculeInputProps {
     moleculeInputType: string
+    canonicalSMILES?: string
+    setCanonicalSMILES: Dispatch<SetStateAction<string | undefined>>
+    molecularWeight?: number
+    setMolecularWeight: Dispatch<SetStateAction<number | undefined>>
 }
 
 // process the input and output a canonicalSMILES and molecular weight to the parent component
 // accepts either SMILES or the name of the reagent
 // if SMILES is entered, MW is calculated with RDKit
 // if name is entered, the molecule can be searched for on PubChem, and the MW populated from PubChem's response
-const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
+const MoleculeInputForm = ({ moleculeInputType,
+    canonicalSMILES,
+    setCanonicalSMILES,
+    molecularWeight,
+    setMolecularWeight
+}: MoleculeInputProps) => {
     const [moleculeInput, setMoleculeInput] = useState<string>('')
     // const [moleculeInputName, setMoleculeInputName] = useState<string>('')
     const [helperText, setHelperText] = useState<string>()
-
-    // want to pass these things up to parent
-    const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
-    const [molecularWeight, setMolecularWeight] = useState<number>()
-
 
     useEffect(() => {
         // recalculate things whenever input is changed
@@ -127,22 +131,50 @@ const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
     )
 }
 
-// TODO: pass the information back up to parent to make request to backend
+
+interface EquivalentsInputFormProps {
+    handleSetEq: Dispatch<SetStateAction<number>>
+}
+const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
+    const [eqHelperText, setEqHelperText] = useState<string>('')
+    return (<TextField
+        label="Equivalents"
+        autoFocus
+        margin="normal"
+        id="equivalents"
+        fullWidth
+        variant="standard"
+        helperText={eqHelperText}
+        onChange={(event) => {
+            const val = event.target.value
+            const numVal = Number(val)
+            if (isNaN(numVal)) {
+                setEqHelperText("Please enter a valid number without commas, and use a decimal point if needed")
+            } else {
+                setEqHelperText("")
+            }
+
+            handleSetEq(numVal)
+        }}
+    />)
+
+}
+
 
 export const AddReagentDialog = () => {
-    const [eq, setEq] = useState<number>()
-    const [eqHelperText, setEqHelperText] = useState<string>('')
-
+    const [eq, setEq] = useState<number>(0)
     const [moleculeInputType, setMoleculeInputType] = useState<string>('SMILES')
-
-
-
+    const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
+    const [molecularWeight, setMolecularWeight] = useState<number>()
 
     const handleMoleculeInputToggle = (_: React.MouseEvent<HTMLElement>, newInput: string | null) => {
         if (newInput !== null) {
             setMoleculeInputType(newInput)
         }
     }
+
+    console.log("EQUIVALENTS: ", eq)
+    console.log("MW: ", molecularWeight)
 
     return (
         <>
@@ -163,27 +195,14 @@ export const AddReagentDialog = () => {
                         Name
                     </ToggleButton>
                 </ToggleButtonGroup>
-                <MoleculeInputForm moleculeInputType={moleculeInputType} />
-                <TextField
-                    label="Equivalents"
-                    autoFocus
-                    margin="normal"
-                    id="equivalents"
-                    fullWidth
-                    variant="standard"
-                    helperText={eqHelperText}
-                    onChange={(event) => {
-                        const val = event.target.value
-                        const numVal = Number(val)
-                        if (isNaN(numVal)) {
-                            setEqHelperText("Please enter a valid number without commas, and use a decimal point if needed")
-                        } else {
-                            setEqHelperText("")
-                        }
-
-                        setEq(numVal)
-                    }}
+                <MoleculeInputForm
+                    moleculeInputType={moleculeInputType}
+                    canonicalSMILES={canonicalSMILES}
+                    setCanonicalSMILES={setCanonicalSMILES}
+                    molecularWeight={molecularWeight}
+                    setMolecularWeight={setMolecularWeight}
                 />
+                <EquivalentsInputForm handleSetEq={setEq} />
             </DialogContent>
         </>
     )
