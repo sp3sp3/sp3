@@ -133,7 +133,7 @@ const MoleculeInputForm = ({ moleculeInputType,
 
 
 interface EquivalentsInputFormProps {
-    handleSetEq: Dispatch<SetStateAction<number>>
+    handleSetEq: Dispatch<SetStateAction<number | undefined>>
 }
 const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
     const [eqHelperText, setEqHelperText] = useState<string>('')
@@ -162,7 +162,7 @@ const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
 
 
 export const AddReagentDialog = () => {
-    const [eq, setEq] = useState<number>(0)
+    const [eq, setEq] = useState<number>()
     const [moleculeInputType, setMoleculeInputType] = useState<string>('SMILES')
     const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
     const [molecularWeight, setMolecularWeight] = useState<number>()
@@ -172,9 +172,6 @@ export const AddReagentDialog = () => {
             setMoleculeInputType(newInput)
         }
     }
-
-    console.log("EQUIVALENTS: ", eq)
-    console.log("MW: ", molecularWeight)
 
     return (
         <>
@@ -203,6 +200,23 @@ export const AddReagentDialog = () => {
                     setMolecularWeight={setMolecularWeight}
                 />
                 <EquivalentsInputForm handleSetEq={setEq} />
+                {
+                    eq && molecularWeight ?
+                        <Button
+                            variant="outlined"
+                            onClick={() => { console.log("Saved: ", eq, molecularWeight) }}
+                        >
+                            SAVE
+                        </Button>
+                        :
+                        <Button
+                            disabled
+                            variant="outlined"
+                        >
+                            SAVE
+                        </Button>
+
+                }
             </DialogContent>
         </>
     )
