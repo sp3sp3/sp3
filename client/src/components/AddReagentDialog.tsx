@@ -9,6 +9,8 @@ interface MoleculeInputProps {
 
 // process the input and output a canonicalSMILES and molecular weight to the parent component
 // accepts either SMILES or the name of the reagent
+// if SMILES is entered, MW is calculated with RDKit
+// if name is entered, the molecule can be searched for on PubChem, and the MW populated from PubChem's response
 const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
     const [moleculeInput, setMoleculeInput] = useState<string>('')
     // const [moleculeInputName, setMoleculeInputName] = useState<string>('')
@@ -64,51 +66,52 @@ const MoleculeInputForm = ({ moleculeInputType }: MoleculeInputProps) => {
                         onChange={(event) => { setMoleculeInput(event.target.value) }}
                     />
                     :
-                    <TextField
-                        label="Molecule name"
-                        autoFocus
-                        margin="normal"
-                        id="molecule-name"
-                        fullWidth
-                        variant="standard"
-                        helperText={helperText}
-                        onChange={async (event) => {
-                            setMoleculeInput(event.target.value)
-                        }}
-                    />
+                    (
+                        <>
+                            <TextField
+                                label="Molecule name"
+                                autoFocus
+                                margin="normal"
+                                id="molecule-name"
+                                fullWidth
+                                variant="standard"
+                                helperText={helperText}
+                                onChange={async (event) => {
+                                    setMoleculeInput(event.target.value)
+                                }}
+                            />
+                            <Button
+                                onClick={async () => {
+                                    type PubChemResponse = {
+                                        "PropertyTable": {
+                                            "Properties": {
+                                                "CID": string,
+                                                "MolecularWeight": string,
+                                                "CanonicalSMILES": string
+                                            }[]
+                                        }
+                                    }
+                                    const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${moleculeInput}/property/MolecularWeight,CanonicalSMILES/json`,)
+                                    if (response.status === 404) {
+                                        setHelperText('Not found in PubChem')
+                                        setCanonicalSMILES('')
+                                    }
+                                    const result: PubChemResponse = await response.json()
+                                    const pcProperties = result.PropertyTable.Properties[0]
+                                    const pubchemSMILES = pcProperties.CanonicalSMILES
+
+                                    setMolecularWeight(Number(pcProperties.MolecularWeight))
+                                    const mol = window.RDKit.get_mol(pubchemSMILES)
+                                    const canonicalized = mol?.get_smiles()
+                                    if (canonicalized) {
+                                        setCanonicalSMILES(canonicalized)
+                                    }
+                                }}
+                            >Search on PubChem</Button>
+                        </>
+                    )
                 }
 
-                {/* add a button to execute a search on PubChem */}
-                {moleculeInputType === "Name"
-                    ? <Button
-                        onClick={async () => {
-                            type PubChemResponse = {
-                                "PropertyTable": {
-                                    "Properties": {
-                                        "CID": string,
-                                        "MolecularWeight": string,
-                                        "CanonicalSMILES": string
-                                    }[]
-                                }
-                            }
-                            const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${moleculeInput}/property/MolecularWeight,CanonicalSMILES/json`,)
-                            if (response.status === 404) {
-                                setHelperText('Not found in PubChem')
-                                setCanonicalSMILES('')
-                            }
-                            const result: PubChemResponse = await response.json()
-                            const pcProperties = result.PropertyTable.Properties[0]
-                            const pubchemSMILES = pcProperties.CanonicalSMILES
-
-                            setMolecularWeight(Number(pcProperties.MolecularWeight))
-                            const mol = window.RDKit.get_mol(pubchemSMILES)
-                            const canonicalized = mol?.get_smiles()
-                            if (canonicalized) {
-                                setCanonicalSMILES(canonicalized)
-                            }
-                        }}
-                    >Search on PubChem</Button>
-                    : null}
                 {canonicalSMILES ?
                     <MoleculeStructure
                         id="molecule-structure"
