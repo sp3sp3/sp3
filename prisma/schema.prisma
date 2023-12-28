@@ -11,11 +11,39 @@ datasource db {
 }
 
 model Project {
-  id       Int       @id @default(autoincrement())
-  name     String
-  parentId Int?
-  parent   Project?  @relation("ParentChild", fields: [parentId], references: [id])
-  children Project[] @relation("ParentChild")
-  // base64image String?
-  image    Bytes?
+  id          Int          @id @default(autoincrement())
+  name        String
+  parentId    Int?
+  parent      Project?     @relation("ParentChild", fields: [parentId], references: [id])
+  children    Project[]    @relation("ParentChild")
+  experiments Experiment[]
+  image       Bytes?
 }
+
+model Experiment {
+  id       Int                 @id @default(autoincrement())
+  name     String
+  parentId Int
+  parent   Project             @relation(fields: [parentId], references: [id])
+  // reagents ExperimentReagent[] 
+}
+
+// model ExperimentReagent {
+//   id           Int             @id @default(autoincrement())
+//   experimentId Int
+//   experiment   Experiment      @relation(fields: [experimentId], references: [id])
+//   locationId   Int
+//   location     ReagentLocation @relation(fields: [locationId], references: [id])
+//   // canonicalSMILES
+//   name         String?
+//   equivalents  Float
+// }
+
+// sqlite does not have enums
+// make a separate table that holds the valid locations
+// add the valid locations in a migration
+// model ReagentLocation {
+//   id       Int                 @id @default(autoincrement())
+//   location String
+//   reagents ExperimentReagent[] 
+// }

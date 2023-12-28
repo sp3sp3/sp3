@@ -27,6 +27,6 @@
   },
   "scripts": {
     "start-server": "ts-node server/index.ts",
-    "test": "npx prisma generate && npx prisma migrate deploy && NODE_ENV=test jest --verbose --runInBand --coverage --detectOpenHandles"
+    "test": "export DATABASE_URL='file:./dev.db' && npx prisma generate && npx prisma migrate deploy && NODE_ENV=test jest --verbose --runInBand --coverage --detectOpenHandles"
   }
 }
