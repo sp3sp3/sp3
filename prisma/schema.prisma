@@ -2,12 +2,14 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [rdkit]
 }
 
 model Project {
@@ -25,25 +27,29 @@ model Experiment {
   name     String
   parentId Int
   parent   Project             @relation(fields: [parentId], references: [id])
-  // reagents ExperimentReagent[] 
+  reagents ExperimentReagent[]
 }
 
-// model ExperimentReagent {
-//   id           Int             @id @default(autoincrement())
-//   experimentId Int
-//   experiment   Experiment      @relation(fields: [experimentId], references: [id])
-//   locationId   Int
-//   location     ReagentLocation @relation(fields: [locationId], references: [id])
-//   // canonicalSMILES
-//   name         String?
-//   equivalents  Float
-// }
+model ExperimentReagent {
+  id                     Int                    @id @default(autoincrement())
+  experimentId           Int
+  experiment             Experiment             @relation(fields: [experimentId], references: [id])
+  reactionSchemeLocation ReactionSchemeLocation
+  reagentId              Int
+  reagent                Reagent                @relation(fields: [reagentId], references: [id])
+  equivalents            Float
+}
 
-// sqlite does not have enums
-// make a separate table that holds the valid locations
-// add the valid locations in a migration
-// model ReagentLocation {
-//   id       Int                 @id @default(autoincrement())
-//   location String
-//   reagents ExperimentReagent[] 
-// }
+enum ReactionSchemeLocation {
+  LEFT_SIDE
+  ABOVE_ARROW
+  BELOW_ARROW
+  RIGHT_SIDE
+}
+
+model Reagent {
+  id              Int                 @id @default(autoincrement())
+  name            String?             @unique // should have either name or a canonicalSMILES 
+  canonicalSMILES Unsupported("mol")? @unique // should have either name or a canonicalSMILES
+  foundIn         ExperimentReagent[] // experiments that this reagent was used in
+}
