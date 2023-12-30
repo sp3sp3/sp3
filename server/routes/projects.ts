@@ -93,11 +93,11 @@ export const getPathToProjectHandler = async (
         name,
         "parentId"
     FROM "Project"
-    WHERE id=${req.params.id}
+    WHERE id=${Number(req.params.id)}
     UNION ALL 
     SELECT p.id,
             p.name, 
-            p."ParentId"
+            p."parentId"
     FROM path, "Project" p
     WHERE p.id=path."parentId"
     ) 
