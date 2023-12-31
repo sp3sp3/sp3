@@ -1,4 +1,10 @@
-import { PrismaClient, Experiment } from "@prisma/client";
+import {
+  PrismaClient,
+  Experiment,
+  ReactionSchemeLocation,
+  ExperimentReagent,
+  Prisma,
+} from "@prisma/client";
 import { Router } from "express";
 import { TypedRequestBody, TypedResponse } from "../types";
 
@@ -35,4 +41,46 @@ export const createExperimentHandler = async (
   }
 };
 
+export interface AssignReagentToExperimentHandlerRequest {
+  experimentId: string;
+  reagentId: string;
+  reactionSchemeLocation: ReactionSchemeLocation;
+  equivalents: number;
+}
+
+export interface AssignReagentToExperimentHandlerResponse {
+  experiment: Experiment & { reagents: ExperimentReagent[] };
+}
+
+// assign reagent to the experiment
+// reagent needs to already be in the DB
+export const assignReagentToExperiment = async (
+  req: TypedRequestBody<AssignReagentToExperimentHandlerRequest>,
+  res: TypedResponse<AssignReagentToExperimentHandlerResponse>,
+) => {
+  const { experimentId, reagentId, reactionSchemeLocation, equivalents } =
+    req.body;
+  try {
+    const result = await prisma.experimentReagent.create({
+      data: {
+        reagentId: Number(reagentId),
+        experimentId: Number(experimentId),
+        reactionSchemeLocation: reactionSchemeLocation,
+        equivalents: equivalents,
+      },
+      include: { experiment: { include: { reagents: true } } },
+    });
+
+    res.json({ experiment: result.experiment });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2003") {
+        return res.status(404).send(`Reagent not in DB: ${e.message}`);
+      }
+    }
+    return res.status(500).send(`Error: ${e}`);
+  }
+};
+
 experimentRoutes.post("/", createExperimentHandler);
+experimentRoutes.post("/assignReagentToExperiment", assignReagentToExperiment);

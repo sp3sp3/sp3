@@ -3,6 +3,10 @@ import { resizeFile } from "../server/routes/projects";
 import path from "path";
 
 const prisma = new PrismaClient();
+
+// some global variables so that they can be used to link up different data
+// in different functions
+let EGFR2ID: number;
 const seedProjects = async () => {
   //
   // first project path
@@ -34,6 +38,8 @@ const seedProjects = async () => {
   const egfr2 = await prisma.project.create({
     data: { name: "step 1 - aryl coupling", parentId: egfr1.id },
   });
+  // save this for use in other functions
+  EGFR2ID = egfr2.id;
   await prisma.project.create({
     data: { name: "step 2 - amide coupling", parentId: egfr1.id },
   });
@@ -83,8 +89,29 @@ const seedProjects = async () => {
   });
 };
 
+const seedExperiments = async () => {
+  await prisma.project.findFirst({ where: { name: "step 1 - aryl coupling" } });
+  await prisma.experiment.create({
+    data: {
+      parentId: EGFR2ID,
+      name: "01012024-suzuki coupling",
+    },
+  });
+};
+
+const seedReagents = async () => {
+  await prisma.$queryRaw`
+        INSERT INTO "Reagent"
+        (name, "canonicalSMILES")
+        VALUES
+        ('ethanol', 'CCO')
+`;
+};
+
 const seedForTests = async () => {
   await seedProjects();
+  await seedExperiments();
+  await seedReagents();
 };
 
 export const resetDB = async () => {
