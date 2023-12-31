@@ -51,5 +51,5 @@ model Reagent {
   id              Int                 @id @default(autoincrement())
   name            String?             @unique // should have either name or a canonicalSMILES 
   canonicalSMILES Unsupported("mol")? @unique // should have either name or a canonicalSMILES
-  foundIn         ExperimentReagent[] // experiments that this reagent was used in
+  experiments     ExperimentReagent[] // experiments that this reagent was used in
 }

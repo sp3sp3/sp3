@@ -10,6 +10,7 @@ import {
   afterAll,
 } from "@jest/globals";
 import {
+  AddReagentHandlerRequest,
   AssignReagentToExperimentHandlerRequest,
   CreateExperimentHandlerRequest,
 } from "../routes/experiments";
@@ -51,8 +52,29 @@ describe("experiments routes", () => {
     });
   });
 
-  describe("POST /createReagent", () => {
-    test("adds a new reagent to the DB", async () => {});
+  describe("POST /addReagent", () => {
+    test("adds a new reagent to the DB", async () => {
+      const payload: AddReagentHandlerRequest = {
+        reagentName: "2,2'-Bipyridine",
+        canonicalSMILES: "C1=CC=NC(=C1)C2=CC=CC=N2",
+      };
+
+      const result = await supertest(server)
+        .post("/experiments/addReagent")
+        .send(payload);
+
+      const expectedResult = {
+        reagent: {
+          id: 2,
+          name: "2,2'-Bipyridine",
+          canonicalSMILES: "c1ccc(-c2ccccn2)nc1",
+        },
+      };
+
+      expect(result.body).toStrictEqual(expectedResult);
+    });
+
+    test("throws error if the reagent is already in the DB", async () => {});
   });
 
   describe("POST /assignReagentToExperiment", () => {
