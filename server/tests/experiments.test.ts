@@ -74,7 +74,30 @@ describe("experiments routes", () => {
       expect(result.body).toStrictEqual(expectedResult);
     });
 
-    test("throws error if the reagent is already in the DB", async () => {});
+    test("throws error if the reagent (name) is already in the DB", async () => {
+      const payload: AddReagentHandlerRequest = {
+        reagentName: "ethanol",
+      };
+
+      const result = await supertest(server)
+        .post("/experiments/addReagent")
+        .send(payload)
+        .expect(400);
+
+      expect(result.text).toStrictEqual("Reagent ethanol already stored");
+    });
+
+    test("throws error if the reagent (SMILES) is already in the DB", async () => {
+      const payload: AddReagentHandlerRequest = {
+        canonicalSMILES: "CCO",
+      };
+
+      const result = await supertest(server)
+        .post("/experiments/addReagent")
+        .send(payload);
+
+      expect(result.text).toStrictEqual("Reagent CCO already stored");
+    });
   });
 
   describe("POST /assignReagentToExperiment", () => {

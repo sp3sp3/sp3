@@ -69,6 +69,11 @@ export const addReagentHandler = async (
             RETURNING id, name, "canonicalSMILES"::text`;
     res.json({ reagent: result[0] });
   } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      return res
+        .status(400)
+        .send(`Reagent ${reagentName || canonicalSMILES} already stored`);
+    }
     return res.status(500).send(`Error: ${e}`);
   }
 };
