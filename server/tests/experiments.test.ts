@@ -1,5 +1,5 @@
 import { server } from "../index";
-import { Experiment, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { resetDB, runSeedForTests } from "../../prisma/seed";
 import {
   test,
@@ -10,7 +10,6 @@ import {
   afterAll,
 } from "@jest/globals";
 import {
-  AddReagentHandlerRequest,
   AssignReagentToExperimentHandlerRequest,
   CreateExperimentHandlerRequest,
 } from "../routes/experiments";
@@ -49,54 +48,6 @@ describe("experiments routes", () => {
       };
 
       expect(result.body).toStrictEqual(expectedResult);
-    });
-  });
-
-  describe("POST /addReagent", () => {
-    test("adds a new reagent to the DB", async () => {
-      const payload: AddReagentHandlerRequest = {
-        reagentName: "2,2'-Bipyridine",
-        canonicalSMILES: "C1=CC=NC(=C1)C2=CC=CC=N2",
-      };
-
-      const result = await supertest(server)
-        .post("/experiments/addReagent")
-        .send(payload);
-
-      const expectedResult = {
-        reagent: {
-          id: 2,
-          name: "2,2'-Bipyridine",
-          canonicalSMILES: "c1ccc(-c2ccccn2)nc1",
-        },
-      };
-
-      expect(result.body).toStrictEqual(expectedResult);
-    });
-
-    test("throws error if the reagent (name) is already in the DB", async () => {
-      const payload: AddReagentHandlerRequest = {
-        reagentName: "ethanol",
-      };
-
-      const result = await supertest(server)
-        .post("/experiments/addReagent")
-        .send(payload)
-        .expect(400);
-
-      expect(result.text).toStrictEqual("Reagent ethanol already stored");
-    });
-
-    test("throws error if the reagent (SMILES) is already in the DB", async () => {
-      const payload: AddReagentHandlerRequest = {
-        canonicalSMILES: "CCO",
-      };
-
-      const result = await supertest(server)
-        .post("/experiments/addReagent")
-        .send(payload);
-
-      expect(result.text).toStrictEqual("Reagent CCO already stored");
     });
   });
 

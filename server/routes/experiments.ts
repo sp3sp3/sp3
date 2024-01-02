@@ -4,7 +4,6 @@ import {
   ReactionSchemeLocation,
   ExperimentReagent,
   Prisma,
-  Reagent,
 } from "@prisma/client";
 import { Router } from "express";
 import { TypedRequestBody, TypedResponse } from "../types";
@@ -39,42 +38,6 @@ export const createExperimentHandler = async (
   } catch (e) {
     console.log(e);
     throw e;
-  }
-};
-
-export interface AddReagentHandlerRequest {
-  reagentName?: string;
-  canonicalSMILES?: string;
-}
-
-type ReagentWithSMILES = Reagent & { canonicalSMILES: string };
-
-export interface AddReagentHandlerResponse {
-  reagent: ReagentWithSMILES;
-}
-
-export const addReagentHandler = async (
-  req: TypedRequestBody<AddReagentHandlerRequest>,
-  res: TypedResponse<AddReagentHandlerResponse>,
-) => {
-  const { reagentName, canonicalSMILES } = req.body;
-  try {
-    // use queryRaw to insert RDKit molecule type which is not supported by Prisma
-    // need to deserialize the RDKit mol type to a text
-    const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
-            INSERT INTO "Reagent"
-            (name, "canonicalSMILES")
-            VALUES
-            (${reagentName}, ${canonicalSMILES}::mol)
-            RETURNING id, name, "canonicalSMILES"::text`;
-    res.json({ reagent: result[0] });
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      return res
-        .status(400)
-        .send(`Reagent ${reagentName || canonicalSMILES} already stored`);
-    }
-    return res.status(500).send(`Error: ${e}`);
   }
 };
 
@@ -121,4 +84,3 @@ export const assignReagentToExperiment = async (
 
 experimentRoutes.post("/", createExperimentHandler);
 experimentRoutes.post("/assignReagentToExperiment", assignReagentToExperiment);
-experimentRoutes.post("/addReagent", addReagentHandler);
