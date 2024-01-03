@@ -26,6 +26,7 @@
     "typescript": "^5.3.2"
   },
   "scripts": {
+    "start-dev-server": "export PORT=3001 && ts-node server/index.ts",
     "start-server": "ts-node server/index.ts",
     "test": "export PORT=3001 && npx prisma generate && npx prisma migrate deploy && NODE_ENV=test jest --verbose --runInBand --coverage --detectOpenHandles"
   }

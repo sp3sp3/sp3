@@ -48,6 +48,30 @@ export const getReagentHandler = async (
   }
 };
 
+export interface GetSimilarReagentsByNameHandlerRequest {
+  name: string;
+}
+
+export interface GetSimilarReagentsByNameHandlerResponse {
+  reagents: ReagentWithSMILES[];
+}
+
+export const getSimilarReagentsByNameHandler = async (
+  req: TypedRequestQuery<GetSimilarReagentsByNameHandlerRequest>,
+  res: TypedResponse<GetSimilarReagentsByNameHandlerResponse>,
+) => {
+  const { name } = req.query;
+  const nameWithOperator = name + "%";
+  const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
+            SELECT id, name, "canonicalSMILES"::text
+            FROM "Reagent"
+            WHERE name LIKE ${nameWithOperator}`;
+  if (result.length > 0) {
+    return res.json({ reagents: result });
+  }
+  return res.json({ reagents: [] });
+};
+
 export interface AddReagentHandlerRequest {
   reagentName?: string;
   canonicalSMILES?: string;
@@ -86,3 +110,4 @@ export const addReagentHandler = async (
 
 reagentRoutes.post("/addReagent", addReagentHandler);
 reagentRoutes.get("/", getReagentHandler);
+reagentRoutes.get("/getSimilarReagentsByName", getSimilarReagentsByNameHandler);

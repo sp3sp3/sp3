@@ -120,21 +120,51 @@ describe("reagents routes", () => {
 
       expect(result.body).toStrictEqual(expectedResult);
     });
+
+    test("throws error if invalid smiles", async () => {
+      const result = await supertest(server).get("/reagents?smiles=ABC");
+
+      expect(result.text).toStrictEqual("ABC is an invalid SMILES");
+    });
+
+    test("returns null if no matching SMILES found", async () => {
+      const result = await supertest(server).get("/reagents?smiles=C");
+      expect(result.body).toStrictEqual({ reagent: null });
+    });
+
+    test("returns null if no matching name found", async () => {
+      const result = await supertest(server).get(
+        "/reagents?name=I am not here",
+      );
+      expect(result.body).toStrictEqual({ reagent: null });
+    });
   });
 
-  test("throws error if invalid smiles", async () => {
-    const result = await supertest(server).get("/reagents?smiles=ABC");
+  describe("GET /getSimilarReagentsByName", () => {
+    test("finds reagent with partial match", async () => {
+      const result = await supertest(server).get(
+        "/reagents/getSimilarReagentsByName?name=e",
+      );
 
-    expect(result.text).toStrictEqual("ABC is an invalid SMILES");
-  });
+      const expectedResult = {
+        reagents: [
+          {
+            id: 1,
+            name: "ethanol",
+            canonicalSMILES: "CCO",
+          },
+        ],
+      };
 
-  test("returns null if no matching SMILES found", async () => {
-    const result = await supertest(server).get("/reagents?smiles=C");
-    expect(result.body).toStrictEqual({ reagent: null });
-  });
+      expect(result.body).toStrictEqual(expectedResult);
+    });
 
-  test("returns null if no matching name found", async () => {
-    const result = await supertest(server).get("/reagents?name=I am not here");
-    expect(result.body).toStrictEqual({ reagent: null });
+    test("returns empty array if no matches", async () => {
+      const result = await supertest(server).get(
+        "/reagents/getSimilarReagentsByName?name=nomatch",
+      );
+
+      expect(result.body).toStrictEqual({ reagents: [] });
+    });
   });
 });
