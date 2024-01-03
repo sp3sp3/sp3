@@ -1,16 +1,21 @@
 import { Prisma, PrismaClient, Reagent } from "@prisma/client";
-import { TypedRequestBody, TypedResponse } from "../types";
+import { TypedRequestBody, TypedRequestQuery, TypedResponse } from "../types";
 import { Router } from "express";
 
 export const reagentRoutes = Router();
 const prisma = new PrismaClient();
+
+export interface GetReagentHandlerRequest {
+  name: string;
+  smiles: string;
+}
 
 export interface GetReagentHandlerResponse {
   reagent: ReagentWithSMILES | null;
 }
 
 export const getReagentHandler = async (
-  req: TypedRequestBody<{}>,
+  req: TypedRequestQuery<GetReagentHandlerRequest>,
   res: TypedResponse<GetReagentHandlerResponse>,
 ) => {
   const { name, smiles } = req.query;
