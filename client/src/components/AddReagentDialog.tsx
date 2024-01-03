@@ -1,6 +1,7 @@
-import { Button, DialogContent, DialogTitle, Grid, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
+import { Button, DialogContent, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material"
+import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
+import { ReactionSchemeLocation } from "@prisma/client"
 
 
 interface MoleculeInputProps {
@@ -148,11 +149,38 @@ const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
 }
 
 
+interface ReactionSchemeLocationFormProps {
+    setReactionSchemeLocation: Dispatch<SetStateAction<ReactionSchemeLocation>>
+}
+const ReactionSchemeLocationForm = ({ setReactionSchemeLocation }: ReactionSchemeLocationFormProps) => {
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setReactionSchemeLocation(event.target.value as ReactionSchemeLocation)
+    }
+
+    return (<FormControl>
+        <FormLabel id="reaction-scheme-location-radio-group" sx={{ fontSize: 12 }}>Location of reagent in reaction scheme</FormLabel>
+        <RadioGroup
+            row
+            aria-labelledby="reaction-scheme-location-radio-group"
+            name="row-radio-buttons-group"
+            onChange={handleChange}
+        >
+            <FormControlLabel value={ReactionSchemeLocation.LEFT_SIDE} control={<Radio />} label="Left side" />
+            <FormControlLabel value={ReactionSchemeLocation.ABOVE_ARROW} control={<Radio />} label="Above arrow" />
+            <FormControlLabel value={ReactionSchemeLocation.BELOW_ARROW} control={<Radio />} label="Below arrow" />
+            <FormControlLabel value={ReactionSchemeLocation.RIGHT_SIDE} control={<Radio />} label="Right side" />
+        </RadioGroup>
+    </FormControl>)
+}
+
+
 export const AddReagentDialog = () => {
     const [eq, setEq] = useState<number>()
     const [moleculeInputType, setMoleculeInputType] = useState<string>('SMILES')
     const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
     const [molecularWeight, setMolecularWeight] = useState<number>()
+    const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>("LEFT_SIDE")
 
     const handleMoleculeInputToggle = (_: React.MouseEvent<HTMLElement>, newInput: string | null) => {
         if (newInput !== null) {
@@ -167,7 +195,7 @@ export const AddReagentDialog = () => {
             </DialogTitle>
             <DialogContent>
                 <Stack direction="row" spacing={2}>
-                    <Stack direction="column" spacing={1} sx={{ width: '100%' }} >
+                    <Stack direction="column" spacing={2} sx={{ width: '100%' }} >
                         <ToggleButtonGroup
                             value={moleculeInputType}
                             exclusive
@@ -187,6 +215,7 @@ export const AddReagentDialog = () => {
                             setMolecularWeight={setMolecularWeight}
                         />
                         <EquivalentsInputForm handleSetEq={setEq} />
+                        <ReactionSchemeLocationForm setReactionSchemeLocation={setReactionSchemeLocation} />
                         {
                             eq && molecularWeight ?
                                 <Button
