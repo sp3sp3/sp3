@@ -1,4 +1,4 @@
-import { Button, DialogContent, DialogTitle, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material"
+import { Button, DialogContent, DialogTitle, Grid, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material"
 import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 
@@ -16,9 +16,7 @@ interface MoleculeInputProps {
 // if SMILES is entered, MW is calculated with RDKit
 // if name is entered, the molecule can be searched for on PubChem, and the MW populated from PubChem's response
 const MoleculeInputForm = ({ moleculeInputType,
-    canonicalSMILES,
     setCanonicalSMILES,
-    molecularWeight,
     setMolecularWeight
 }: MoleculeInputProps) => {
     const [moleculeInput, setMoleculeInput] = useState<string>('')
@@ -40,17 +38,17 @@ const MoleculeInputForm = ({ moleculeInputType,
                     if (desc) {
                         const jsonDesc = JSON.parse(desc)
                         setMolecularWeight(jsonDesc.exactmw)
-                        setHelperText(`Calculated MW: ${molecularWeight}`)
                     }
                 } else {
                     setHelperText('Invalid SMILES')
                     setMolecularWeight(undefined)
                 }
-            } else {
-                setHelperText(`MW: ${molecularWeight}`)
+            }
+            else {
+                setHelperText('')
             }
         }
-    }, [moleculeInput, molecularWeight])
+    }, [moleculeInput])
 
 
     return (
@@ -115,17 +113,6 @@ const MoleculeInputForm = ({ moleculeInputType,
                         </>
                     )
                 }
-
-                {canonicalSMILES ?
-                    <MoleculeStructure
-                        id="molecule-structure"
-                        structure={canonicalSMILES}
-                        width={150}
-                        height={150}
-                        svgMode
-                    />
-                    : null
-                }
             </Stack>
         </>
     )
@@ -179,44 +166,72 @@ export const AddReagentDialog = () => {
                 Add reagent
             </DialogTitle>
             <DialogContent>
-                <ToggleButtonGroup
-                    value={moleculeInputType}
-                    exclusive
-                    onChange={handleMoleculeInputToggle}
-                    aria-label="input type for molecule"
-                >
-                    <ToggleButton value="SMILES" aria-label="SMILES">
-                        SMILES
-                    </ToggleButton>
-                    <ToggleButton value="Name" aria-label="Name">
-                        Name
-                    </ToggleButton>
-                </ToggleButtonGroup>
-                <MoleculeInputForm
-                    moleculeInputType={moleculeInputType}
-                    canonicalSMILES={canonicalSMILES}
-                    setCanonicalSMILES={setCanonicalSMILES}
-                    molecularWeight={molecularWeight}
-                    setMolecularWeight={setMolecularWeight}
-                />
-                <EquivalentsInputForm handleSetEq={setEq} />
-                {
-                    eq && molecularWeight ?
-                        <Button
-                            variant="outlined"
-                            onClick={() => { console.log("Saved: ", eq, molecularWeight) }}
+                <Stack direction="row" spacing={2}>
+                    <Stack direction="column" spacing={1} sx={{ width: '100%' }} >
+                        <ToggleButtonGroup
+                            value={moleculeInputType}
+                            exclusive
+                            onChange={handleMoleculeInputToggle}
+                            aria-label="input type for molecule"
                         >
-                            SAVE
-                        </Button>
-                        :
-                        <Button
-                            disabled
-                            variant="outlined"
-                        >
-                            SAVE
-                        </Button>
+                            <ToggleButton value="SMILES" aria-label="SMILES">
+                                SMILES
+                            </ToggleButton>
+                            <ToggleButton value="Name" aria-label="Name">
+                                Name
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                        <MoleculeInputForm
+                            moleculeInputType={moleculeInputType}
+                            setCanonicalSMILES={setCanonicalSMILES}
+                            setMolecularWeight={setMolecularWeight}
+                        />
+                        <EquivalentsInputForm handleSetEq={setEq} />
+                        {
+                            eq && molecularWeight ?
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => { console.log("Saved: ", eq, molecularWeight) }}
+                                >
+                                    SAVE
+                                </Button>
+                                :
+                                <Button
+                                    disabled
+                                    variant="outlined"
+                                >
+                                    SAVE
+                                </Button>
 
-                }
+                        }
+                    </Stack>
+                    <Grid
+                        container
+                        spacing={0}
+                        direction="column"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        {canonicalSMILES ?
+                            <>
+                                <MoleculeStructure
+                                    id="molecule-structure"
+                                    structure={canonicalSMILES}
+                                    width={150}
+                                    height={150}
+                                    svgMode
+                                />
+                                {molecularWeight ?
+                                    <>
+                                        MW: {molecularWeight} g/mol
+                                    </> :
+                                    null
+                                }
+                            </>
+                            : null
+                        }
+                    </Grid>
+                </Stack>
             </DialogContent>
         </>
     )
