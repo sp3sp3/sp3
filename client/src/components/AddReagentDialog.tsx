@@ -1,7 +1,10 @@
-import { Button, DialogContent, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material"
-import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from "react"
+import Tooltip from '@mui/material/Tooltip';
+import InfoIcon from '@mui/icons-material/Info';
+import { Autocomplete, Button, DialogContent, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
+import { ChangeEvent, Dispatch, SetStateAction, SyntheticEvent, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 import { ReactionSchemeLocation } from "@prisma/client"
+import { GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
 
 
 interface MoleculeInputProps {
@@ -23,6 +26,26 @@ const MoleculeInputForm = ({ moleculeInputType,
     const [moleculeInput, setMoleculeInput] = useState<string>('')
     // const [moleculeInputName, setMoleculeInputName] = useState<string>('')
     const [helperText, setHelperText] = useState<string>()
+    const [options, setOptions] = useState<string[]>([])
+
+
+    const searchReagents = async (query: string) => {
+        const response = await fetch(`http://localhost:3000/reagents/getSimilarReagentsByName?name=${query}`)
+        const result: GetSimilarReagentsByNameHandlerResponse = await response.json()
+        if (result.reagents) {
+            setOptions(result.reagents.map((i) => i.name ?? ''))
+        } else {
+            setOptions([])
+        }
+    }
+
+    const onInputChange = (_: SyntheticEvent<Element, Event>, value: string) => {
+        if (value) {
+            searchReagents(value)
+        } else {
+            setOptions([])
+        }
+    }
 
     useEffect(() => {
         // recalculate things whenever input is changed
@@ -71,17 +94,40 @@ const MoleculeInputForm = ({ moleculeInputType,
                     :
                     (
                         <>
-                            <TextField
-                                label="Molecule name"
-                                autoFocus
-                                margin="normal"
-                                id="molecule-name"
+                            <Autocomplete
+                                options={options}
+                                freeSolo={true}
+                                onInputChange={onInputChange}
                                 fullWidth
-                                variant="standard"
-                                helperText={helperText}
-                                onChange={async (event) => {
-                                    setMoleculeInput(event.target.value)
-                                }}
+                                id="molecule-name"
+                                renderInput={(params) => (
+                                    <TextField {...params}
+                                        InputLabelProps={{ style: { pointerEvents: "auto" } }}
+                                        label={
+                                            <Grid
+                                                container
+                                                spacing={0}
+                                                direction="row"
+                                                alignItems="center"
+                                                justifyContent="center"
+                                            >
+                                                <Typography variant="body1">
+                                                    Molecule name
+                                                </Typography>
+                                                <Tooltip title="Automatically searches your database for reagents with a similar name. ">
+                                                    <InfoIcon />
+                                                </Tooltip>
+                                            </Grid>
+                                        }
+                                        helperText={helperText}
+                                        margin="normal"
+                                        autoFocus
+                                        fullWidth
+                                        onChange={async (event) => {
+                                            setMoleculeInput(event.target.value)
+                                        }}
+                                        variant="standard" />
+                                )}
                             />
                             <Button
                                 onClick={async () => {
@@ -98,16 +144,17 @@ const MoleculeInputForm = ({ moleculeInputType,
                                     if (response.status === 404) {
                                         setHelperText('Not found in PubChem')
                                         setCanonicalSMILES('')
-                                    }
-                                    const result: PubChemResponse = await response.json()
-                                    const pcProperties = result.PropertyTable.Properties[0]
-                                    const pubchemSMILES = pcProperties.CanonicalSMILES
+                                    } else {
+                                        const result: PubChemResponse = await response.json()
+                                        const pcProperties = result.PropertyTable.Properties[0]
+                                        const pubchemSMILES = pcProperties.CanonicalSMILES
 
-                                    setMolecularWeight(Number(pcProperties.MolecularWeight))
-                                    const mol = window.RDKit.get_mol(pubchemSMILES)
-                                    const canonicalized = mol?.get_smiles()
-                                    if (canonicalized) {
-                                        setCanonicalSMILES(canonicalized)
+                                        setMolecularWeight(Number(pcProperties.MolecularWeight))
+                                        const mol = window.RDKit.get_mol(pubchemSMILES)
+                                        const canonicalized = mol?.get_smiles()
+                                        if (canonicalized) {
+                                            setCanonicalSMILES(canonicalized)
+                                        }
                                     }
                                 }}
                             >Search on PubChem</Button>
