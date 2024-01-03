@@ -17,30 +17,22 @@ export const getReagentHandler = async (
   try {
     // search by canonicalSMILES if both name and SMILES are provided
     // otherwise search by name
-    if (smiles) {
-      const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
-        SELECT id, name, "canonicalSMILES"::text
-        FROM "Reagent"
-        WHERE "canonicalSMILES"@=${smiles}::mol
-        `;
 
-      if (result.length > 0) {
-        return res.json({ reagent: result[0] });
-      }
-      return res.json({ reagent: null });
-    } else if (name) {
-      const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
-        SELECT id, name, "canonicalSMILES"::text
-        FROM "Reagent"
-        WHERE name=${name}`;
+    // need to use Prisma.sql and not just a multi line string `` to
+    // do a double string templating
+    const query = smiles
+      ? Prisma.sql`"canonicalSMILES"@=${smiles}::mol`
+      : Prisma.sql`name=${name}`;
 
-      if (result.length > 0) {
-        return res.json({ reagent: result[0] });
-      }
-      return res.json({ reagent: null });
-    } else {
-      return res.json({ reagent: null });
+    const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
+            SELECT id, name, "canonicalSMILES"::text
+            FROM "Reagent"
+            WHERE ${query}`;
+
+    if (result.length > 0) {
+      return res.json({ reagent: result[0] });
     }
+    return res.json({ reagent: null });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2010") {
