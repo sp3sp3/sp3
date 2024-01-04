@@ -8,11 +8,12 @@ import { GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/
 
 
 interface NameInputFormProps {
+    setReagentName: Dispatch<SetStateAction<string | undefined>>
     setCanonicalSMILES: Dispatch<SetStateAction<string | undefined>>
     setMolecularWeight: Dispatch<SetStateAction<number | undefined>>
 }
 
-const NameInputForm = ({ setCanonicalSMILES, setMolecularWeight }: NameInputFormProps) => {
+const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeight }: NameInputFormProps) => {
     const [inputName, setInputName] = useState<string>()
     const [NameHelperText, setNameHelperText] = useState<string>()
     const [options, setOptions] = useState<string[]>([])
@@ -30,6 +31,7 @@ const NameInputForm = ({ setCanonicalSMILES, setMolecularWeight }: NameInputForm
     const onInputChange = (_: SyntheticEvent<Element, Event>, value: string) => {
         if (value) {
             searchReagents(value)
+            setInputName(value)
         } else {
             setOptions([])
         }
@@ -41,7 +43,11 @@ const NameInputForm = ({ setCanonicalSMILES, setMolecularWeight }: NameInputForm
         if (inputName === '') {
             setNameHelperText('')
             setCanonicalSMILES('')
+            setReagentName('')
         }
+        setReagentName(inputName)
+
+
     }, [inputName])
 
     return (
@@ -75,9 +81,6 @@ const NameInputForm = ({ setCanonicalSMILES, setMolecularWeight }: NameInputForm
                         margin="normal"
                         autoFocus
                         fullWidth
-                        onChange={async (event) => {
-                            setInputName(event.target.value)
-                        }}
                         variant="standard" />
                 )}
             />
@@ -107,6 +110,7 @@ const NameInputForm = ({ setCanonicalSMILES, setMolecularWeight }: NameInputForm
                         if (canonicalized) {
                             setCanonicalSMILES(canonicalized)
                         }
+                        setNameHelperText('')
                     }
                 }}
             >Search name on PubChem</Button>
@@ -238,6 +242,7 @@ const ReactionSchemeLocationForm = ({ setReactionSchemeLocation }: ReactionSchem
 
 export const AddReagentDialog = () => {
     const [eq, setEq] = useState<number>()
+    const [reagentName, setReagentName] = useState<string>()
     const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
     const [molecularWeight, setMolecularWeight] = useState<number>()
     const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>("LEFT_SIDE")
@@ -261,6 +266,7 @@ export const AddReagentDialog = () => {
                             setMolecularWeight={setMolecularWeight}
                         />
                         <NameInputForm
+                            setReagentName={setReagentName}
                             setCanonicalSMILES={setCanonicalSMILES}
                             setMolecularWeight={setMolecularWeight} />
                         <EquivalentsInputForm handleSetEq={setEq} />
