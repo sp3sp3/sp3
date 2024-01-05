@@ -17,12 +17,14 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
     const [inputName, setInputName] = useState<string>()
     const [NameHelperText, setNameHelperText] = useState<string>()
     const [options, setOptions] = useState<string[]>([])
+    const [queryResults, setQueryResults] = useState<GetSimilarReagentsByNameHandlerResponse>()
 
     const searchReagents = async (query: string) => {
         const response = await fetch(`http://localhost:3000/reagents/getSimilarReagentsByName?name=${query}`)
         const result: GetSimilarReagentsByNameHandlerResponse = await response.json()
         if (result.reagents) {
             setOptions(result.reagents.map((i) => i.name ?? ''))
+            setQueryResults(result)
         } else {
             setOptions([])
         }
@@ -58,6 +60,11 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                 onInputChange={onInputChange}
                 fullWidth
                 id="molecule-name"
+                onChange={(_, value) => {
+                    const match = queryResults?.reagents.find((i) => i.name === value)
+                    setCanonicalSMILES(match?.canonicalSMILES)
+                    setReagentName(match?.name ?? undefined)
+                }}
                 renderInput={(params) => (
                     <TextField {...params}
                         InputLabelProps={{ style: { pointerEvents: "auto" } }}
