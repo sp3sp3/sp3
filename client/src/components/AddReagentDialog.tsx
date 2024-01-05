@@ -36,6 +36,7 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
             setInputName(value)
         } else {
             setOptions([])
+            setInputName('')
         }
     }
 
@@ -334,7 +335,7 @@ export const AddReagentDialog = () => {
                         <EquivalentsInputForm handleSetEq={setEq} />
                         <ReactionSchemeLocationForm setReactionSchemeLocation={setReactionSchemeLocation} />
                         {
-                            eq && molecularWeightString && reactionSchemeLocation ?
+                            (canonicalSMILES || reagentName) && eq && molecularWeightString && reactionSchemeLocation ?
                                 <Button
                                     variant="outlined"
                                     onClick={() => {
