@@ -200,7 +200,7 @@ const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight }: Molec
     return (
         <>
             <TextField
-                label="Molecular Weight"
+                label="Molecular Weight (g/mol)"
                 value={molecularWeight}
                 autoFocus
                 InputLabelProps={{ shrink: molecularWeight ? true : false }}
