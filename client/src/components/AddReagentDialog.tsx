@@ -1,6 +1,6 @@
 import Tooltip from '@mui/material/Tooltip';
 import InfoIcon from '@mui/icons-material/Info';
-import { Autocomplete, Button, DialogContent, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material"
+import { Autocomplete, Button, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material"
 import { ChangeEvent, Dispatch, SetStateAction, SyntheticEvent, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 import { ReactionSchemeLocation } from "@prisma/client"
@@ -10,10 +10,10 @@ import { GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/
 interface NameInputFormProps {
     setReagentName: Dispatch<SetStateAction<string | undefined>>
     setCanonicalSMILES: Dispatch<SetStateAction<string | undefined>>
-    setMolecularWeight: Dispatch<SetStateAction<number | undefined>>
+    setMolecularWeightString: Dispatch<SetStateAction<string | undefined>>
 }
 
-const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeight }: NameInputFormProps) => {
+const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightString }: NameInputFormProps) => {
     const [inputName, setInputName] = useState<string>()
     const [NameHelperText, setNameHelperText] = useState<string>()
     const [options, setOptions] = useState<string[]>([])
@@ -81,10 +81,14 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeight 
                         margin="normal"
                         autoFocus
                         fullWidth
+                        FormHelperTextProps={{
+                            error: true
+                        }}
                         variant="standard" />
                 )}
             />
             <Button
+                variant='contained'
                 onClick={async () => {
                     type PubChemResponse = {
                         "PropertyTable": {
@@ -99,12 +103,13 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeight 
                     if (response.status === 404) {
                         setNameHelperText('Not found in PubChem')
                         setCanonicalSMILES('')
+                        setMolecularWeightString('')
                     } else {
                         const result: PubChemResponse = await response.json()
                         const pcProperties = result.PropertyTable.Properties[0]
                         const pubchemSMILES = pcProperties.CanonicalSMILES
 
-                        setMolecularWeight(Number(pcProperties.MolecularWeight))
+                        setMolecularWeightString(pcProperties.MolecularWeight)
                         const mol = window.RDKit.get_mol(pubchemSMILES)
                         const canonicalized = mol?.get_smiles()
                         if (canonicalized) {
@@ -120,8 +125,9 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeight 
 
 
 interface SMILESInputProps {
+    canonicalSMILES?: string
     setCanonicalSMILES: Dispatch<SetStateAction<string | undefined>>
-    setMolecularWeight: Dispatch<SetStateAction<number | undefined>>
+    setMolecularWeightString: Dispatch<SetStateAction<string | undefined>>
 }
 
 // process the input and output a canonicalSMILES and molecular weight to the parent component
@@ -129,15 +135,14 @@ interface SMILESInputProps {
 // if SMILES is entered, MW is calculated with RDKit
 // if name is entered, the molecule can be searched for on PubChem, and the MW populated from PubChem's response
 const SMILESInputForm = ({
+    canonicalSMILES,
     setCanonicalSMILES,
-    setMolecularWeight
+    setMolecularWeightString
 }: SMILESInputProps) => {
     const [inputSMILES, setInputSMILES] = useState<string>()
-    // const [moleculeInputName, setMoleculeInputName] = useState<string>('')
     const [SMILESHelperText, setSMILESHelperText] = useState<string>()
 
 
-    // TODO: make a component for SMILES and for Name. Maybe can be reusable
     useEffect(() => {
         // recalculate things whenever input is changed
         // if there is no input
@@ -152,11 +157,11 @@ const SMILESInputForm = ({
                     const desc = mol?.get_descriptors()
                     if (desc) {
                         const jsonDesc = JSON.parse(desc)
-                        setMolecularWeight(jsonDesc.exactmw)
+                        setMolecularWeightString(jsonDesc.exactmw)
                     }
                 } else {
                     setSMILESHelperText('Invalid SMILES')
-                    setMolecularWeight(undefined)
+                    setMolecularWeightString(undefined)
                 }
             }
             else {
@@ -171,6 +176,8 @@ const SMILESInputForm = ({
             <Stack>
                 <TextField
                     label="Molecule SMILES"
+                    value={canonicalSMILES}
+                    InputLabelProps={{ shrink: canonicalSMILES ? true : false }}
                     autoFocus
                     margin="normal"
                     id="molecule-smiles"
@@ -180,6 +187,41 @@ const SMILESInputForm = ({
                     onChange={(event) => { setInputSMILES(event.target.value) }}
                 />
             </Stack>
+        </>
+    )
+}
+
+interface MolecularWeightInputFormProps {
+    molecularWeight?: string;
+    setMolecularWeight: Dispatch<SetStateAction<string | undefined>>
+}
+const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight }: MolecularWeightInputFormProps) => {
+    const [mwHelperText, setMWHelperText] = useState<string>()
+    return (
+        <>
+            <TextField
+                label="Molecular Weight"
+                value={molecularWeight}
+                autoFocus
+                InputLabelProps={{ shrink: molecularWeight ? true : false }}
+                helperText={mwHelperText}
+                margin="normal"
+                id="mw"
+                fullWidth
+                variant='standard'
+                onChange={(event) => {
+                    const val = event.target.value
+                    console.log("val: ", typeof val)
+                    const numVal = Number(val)
+                    console.log(numVal)
+                    if (isNaN(numVal)) {
+                        setMWHelperText("Please enter a valid number without commas, and use a decimal point if needed")
+                    } else {
+                        setMWHelperText("")
+                    }
+                    setMolecularWeight(val)
+                }}
+            />
         </>
     )
 }
@@ -215,7 +257,7 @@ const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
 
 
 interface ReactionSchemeLocationFormProps {
-    setReactionSchemeLocation: Dispatch<SetStateAction<ReactionSchemeLocation>>
+    setReactionSchemeLocation: Dispatch<SetStateAction<ReactionSchemeLocation | undefined>>
 }
 const ReactionSchemeLocationForm = ({ setReactionSchemeLocation }: ReactionSchemeLocationFormProps) => {
 
@@ -244,8 +286,11 @@ export const AddReagentDialog = () => {
     const [eq, setEq] = useState<number>()
     const [reagentName, setReagentName] = useState<string>()
     const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
-    const [molecularWeight, setMolecularWeight] = useState<number>()
-    const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>("LEFT_SIDE")
+    // set this as string because populating the value of textfield programatically 
+    // can end up switching up the types from number to string. This causes decimal
+    // points not able to be typed in after user types something that is NaN
+    const [molecularWeightString, setMolecularWeightString] = useState<string>()
+    const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>()
 
     //TODO: remove toggle. THe user should be able to input name and SMILES for things that are not in pubchem
     // right now, if they put smiles, they cannot assign a name
@@ -253,29 +298,41 @@ export const AddReagentDialog = () => {
     // but pubchem may not have the compound of interest
     // also allow user to input MW
     // and density
+    useEffect(() => { }, [molecularWeightString])
     return (
         <>
             <DialogTitle>
                 Add reagent
             </DialogTitle>
             <DialogContent>
+                <DialogContentText>
+                    If the molecule has a well known name, try search for it on PubChem and automatically get the SMILES and molecular weight.
+                    Otherwise, you can manually enter the values you need for your reagent.
+                </DialogContentText>
                 <Stack direction="row" spacing={2}>
                     <Stack direction="column" spacing={2} sx={{ width: '100%' }} >
-                        <SMILESInputForm
-                            setCanonicalSMILES={setCanonicalSMILES}
-                            setMolecularWeight={setMolecularWeight}
-                        />
                         <NameInputForm
                             setReagentName={setReagentName}
                             setCanonicalSMILES={setCanonicalSMILES}
-                            setMolecularWeight={setMolecularWeight} />
+                            setMolecularWeightString={setMolecularWeightString} />
+                        <SMILESInputForm
+                            canonicalSMILES={canonicalSMILES}
+                            setCanonicalSMILES={setCanonicalSMILES}
+                            setMolecularWeightString={setMolecularWeightString}
+                        />
+                        <MolecularWeightInputForm
+                            molecularWeight={molecularWeightString}
+                            setMolecularWeight={setMolecularWeightString}
+                        />
                         <EquivalentsInputForm handleSetEq={setEq} />
                         <ReactionSchemeLocationForm setReactionSchemeLocation={setReactionSchemeLocation} />
                         {
-                            eq && molecularWeight ?
+                            eq && molecularWeightString && reactionSchemeLocation ?
                                 <Button
                                     variant="outlined"
-                                    onClick={() => { console.log("Saved: ", eq, molecularWeight) }}
+                                    onClick={() => {
+                                        console.log(`name: ${reagentName}, SMILES: ${canonicalSMILES}, eq: ${eq}, mw: ${molecularWeightString}, loc: ${reactionSchemeLocation}`)
+                                    }}
                                 >
                                     SAVE
                                 </Button>
@@ -305,9 +362,9 @@ export const AddReagentDialog = () => {
                                     height={150}
                                     svgMode
                                 />
-                                {molecularWeight ?
+                                {molecularWeightString ?
                                     <>
-                                        MW: {molecularWeight} g/mol
+                                        MW: {molecularWeightString} g/mol
                                     </> :
                                     null
                                 }
