@@ -358,8 +358,8 @@ export const AddReagentDialog = () => {
                                 <MoleculeStructure
                                     id="molecule-structure"
                                     structure={canonicalSMILES}
-                                    width={150}
-                                    height={150}
+                                    width={300}
+                                    height={300}
                                     svgMode
                                 />
                                 {molecularWeightString ?
