@@ -1,3 +1,4 @@
+import LaunchIcon from '@mui/icons-material/Launch';
 import Tooltip from '@mui/material/Tooltip';
 import InfoIcon from '@mui/icons-material/Info';
 import { Alert, Autocomplete, Button, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Snackbar, Stack, TextField, Typography } from "@mui/material"
@@ -14,9 +15,10 @@ interface NameInputFormProps {
     setReagentName: Dispatch<SetStateAction<string | undefined>>
     setCanonicalSMILES: Dispatch<SetStateAction<string | undefined>>
     setMolecularWeightString: Dispatch<SetStateAction<string | undefined>>
+    setDensityFoundInPubChem: Dispatch<SetStateAction<boolean>>
 }
 
-const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightString }: NameInputFormProps) => {
+const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightString, setDensityFoundInPubChem }: NameInputFormProps) => {
     const [inputName, setInputName] = useState<string>()
     const [NameHelperText, setNameHelperText] = useState<string>()
     const [options, setOptions] = useState<string[]>([])
@@ -43,6 +45,21 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
         }
     }
 
+    const checkIfDensityInPubChem = async (cid: string) => {
+        const pugViewResponse = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${cid}/JSON`)
+        const pugViewJSON = await pugViewResponse.json()
+        const chemPhysProps = pugViewJSON.Record.Section.find((i: any) => i.TOCHeading === "Chemical and Physical Properties")
+        const experimentalProperties = chemPhysProps.Section.find((i: any) => i.TOCHeading === "Experimental Properties")
+        if (!experimentalProperties) {
+            return false
+        }
+        if (experimentalProperties.Section.find((i: any) => i.TOCHeading === "Density")) {
+            return true
+        }
+        return false
+
+    }
+
     useEffect(() => {
         // recalculate things whenever input is changed
         // if there is no input
@@ -58,46 +75,50 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
 
     return (
         <>
-            <Autocomplete
-                options={options}
-                freeSolo={true}
-                onInputChange={onInputChange}
-                fullWidth
-                id="molecule-name"
-                onChange={(_, value) => {
-                    const match = queryResults?.reagents.find((i) => i.name === value)
-                    setCanonicalSMILES(match?.canonicalSMILES)
-                    setReagentName(match?.name ?? undefined)
-                }}
-                renderInput={(params) => (
-                    <TextField {...params}
-                        InputLabelProps={{ style: { pointerEvents: "auto" } }}
-                        label={
-                            <Grid
-                                container
-                                spacing={0}
-                                direction="row"
-                                alignItems="center"
-                                justifyContent="center"
-                            >
-                                <Typography variant="body1">
-                                    Molecule name
-                                </Typography>
-                                <Tooltip title="Automatically searches your database for reagents with a similar name. ">
+            <Tooltip
+                title="Automatically searches your database for reagents with a similar name. 
+                Alternatively, the program can search PubChem for a compound by this name."
+                placement="right"
+            >
+                <Autocomplete
+                    options={options}
+                    freeSolo={true}
+                    onInputChange={onInputChange}
+                    fullWidth
+                    id="molecule-name"
+                    onChange={(_, value) => {
+                        const match = queryResults?.reagents.find((i) => i.name === value)
+                        setCanonicalSMILES(match?.canonicalSMILES)
+                        setReagentName(match?.name ?? undefined)
+                    }}
+                    renderInput={(params) => (
+                        <TextField {...params}
+                            InputLabelProps={{ style: { pointerEvents: "auto" } }}
+                            label={
+                                <Grid
+                                    container
+                                    spacing={0}
+                                    direction="row"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                >
+                                    <Typography variant="body1">
+                                        Molecule name
+                                    </Typography>
                                     <InfoIcon />
-                                </Tooltip>
-                            </Grid>
-                        }
-                        helperText={NameHelperText}
-                        margin="normal"
-                        autoFocus
-                        fullWidth
-                        FormHelperTextProps={{
-                            error: true
-                        }}
-                        variant="standard" />
-                )}
-            />
+                                </Grid>
+                            }
+                            helperText={NameHelperText}
+                            margin="normal"
+                            autoFocus
+                            fullWidth
+                            FormHelperTextProps={{
+                                error: true
+                            }}
+                            variant="standard" />
+                    )}
+                />
+            </Tooltip>
             <Button
                 variant='contained'
                 onClick={async () => {
@@ -111,9 +132,6 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                         }
                     }
                     const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${inputName}/property/MolecularWeight,CanonicalSMILES/json`,)
-                    //TODO: add density from pug_view
-                    // need to get the CID then make another request
-                    // example of THF: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8028/JSON
                     if (response.status === 404) {
                         setNameHelperText('Not found in PubChem')
                         setCanonicalSMILES('')
@@ -122,7 +140,12 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                         const result: PubChemResponse = await response.json()
                         const pcProperties = result.PropertyTable.Properties[0]
                         const pubchemSMILES = pcProperties.CanonicalSMILES
-
+                        const cid = pcProperties.CID
+                        // check if there is a density in its pub chem properties 
+                        // if there is, just make a link for the user to click and inspect the data
+                        if (await checkIfDensityInPubChem(cid)) {
+                            setDensityFoundInPubChem(true)
+                        }
                         setMolecularWeightString(pcProperties.MolecularWeight)
                         const mol = window.RDKit.get_mol(pubchemSMILES)
                         const canonicalized = mol?.get_smiles()
@@ -254,34 +277,64 @@ const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight, setMole
 interface DensityInputFormProps {
     setDensity: Dispatch<SetStateAction<number | undefined>>
     setDensityFormValid: Dispatch<SetStateAction<boolean>>
+    densityFoundInPubChem: boolean
+    reagentName?: string
 }
-const DensityInputForm = ({ setDensity, setDensityFormValid }: DensityInputFormProps) => {
+const DensityInputForm = ({ setDensity, setDensityFormValid, densityFoundInPubChem, reagentName }: DensityInputFormProps) => {
     const [densityHelperText, setDensityHelperText] = useState<string>('')
     return (
-        <TextField
-            label="Density (g/mL)"
-            autoFocus
-            margin="normal"
-            error={densityHelperText === NUMBER_INPUT_ERROR_MSG ? true : false}
-            id="density"
-            fullWidth
-            variant="standard"
-            helperText={densityHelperText}
-            onChange={(event) => {
-                const val = event.target.value
-                const numVal = Number(val)
-                if (isNaN(numVal)) {
-                    setDensityHelperText(NUMBER_INPUT_ERROR_MSG)
-                    setDensityFormValid(false)
-                } else {
-                    setDensityFormValid(true)
-                    setDensityHelperText("")
-                }
+        <>
+            <Tooltip
+                title="PubChem can be searched for experimental values of density for this compound using the chemical name."
+            >
+                <TextField
+                    label={
+                        <Grid
+                            container
+                            spacing={0}
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="center"
+                        >
 
-                setDensity(numVal)
-            }}
-        />)
+                            <Typography variant="body1">
+                                Density (g/mL)
+                            </Typography>
+                            <InfoIcon />
+                        </Grid>
+                    }
+                    autoFocus
+                    margin="normal"
+                    error={densityHelperText === NUMBER_INPUT_ERROR_MSG ? true : false}
+                    id="density"
+                    fullWidth
+                    variant="standard"
+                    helperText={densityHelperText}
+                    onChange={(event) => {
+                        const val = event.target.value
+                        const numVal = Number(val)
+                        if (isNaN(numVal)) {
+                            setDensityHelperText(NUMBER_INPUT_ERROR_MSG)
+                            setDensityFormValid(false)
+                        } else {
+                            setDensityFormValid(true)
+                            setDensityHelperText("")
+                        }
 
+                        setDensity(numVal)
+                    }}
+                />
+            </Tooltip>
+            {densityFoundInPubChem && reagentName ?
+                <Button target="_blank" href={`https://pubchem.ncbi.nlm.nih.gov/compound/${reagentName}#section=Density`} >
+                    <Tooltip title="View density info on PubChem">
+                        <LaunchIcon></LaunchIcon>
+                    </Tooltip>
+                </Button>
+                :
+                null}
+        </>
+    )
 }
 
 
@@ -359,6 +412,7 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
     // equivalents are mandatory, so if eq becomes NaN, then the boolean check for 
     // saving fails there because NaN is falsey
     const [densityFormValid, setDensityFormValid] = useState<boolean>(true)
+    const [densityFoundInPubChem, setDensityFoundInPubChem] = useState<boolean>(false)
     const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>()
     const [snackBarOpen, setSnackBarOpen] = useState<boolean>(false)
     const [successfulAdd, setSuccessfulAdd] = useState<boolean>()
@@ -434,7 +488,9 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
                         <NameInputForm
                             setReagentName={setReagentName}
                             setCanonicalSMILES={setCanonicalSMILES}
-                            setMolecularWeightString={setMolecularWeightString} />
+                            setMolecularWeightString={setMolecularWeightString}
+                            setDensityFoundInPubChem={setDensityFoundInPubChem}
+                        />
                         <SMILESInputForm
                             canonicalSMILES={canonicalSMILES}
                             setCanonicalSMILES={setCanonicalSMILES}
@@ -446,7 +502,12 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
                                 setMolecularWeight={setMolecularWeightString}
                                 setMolecularWeightFormValid={setMolecularWeightFormValid}
                             />
-                            <DensityInputForm setDensity={setDensity} setDensityFormValid={setDensityFormValid} />
+                            <DensityInputForm
+                                setDensity={setDensity}
+                                setDensityFormValid={setDensityFormValid}
+                                densityFoundInPubChem={densityFoundInPubChem}
+                                reagentName={reagentName}
+                            />
                         </Stack>
                         <EquivalentsInputForm handleSetEq={setEq} />
                         <ReactionSchemeLocationForm setReactionSchemeLocation={setReactionSchemeLocation} />
