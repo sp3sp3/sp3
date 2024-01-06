@@ -72,6 +72,13 @@ describe("experiments routes", () => {
           reagents: [
             {
               id: 1,
+              reagentId: 2,
+              reactionSchemeLocation: "ABOVE_ARROW",
+              experimentId: 1,
+              equivalents: 1,
+            },
+            {
+              id: 2,
               reagentId: 1,
               reactionSchemeLocation: "LEFT_SIDE",
               experimentId: 1,
@@ -96,6 +103,20 @@ describe("experiments routes", () => {
         .post("/experiments/assignReagentToExperiment")
         .send(payload)
         .expect(404);
+    });
+
+    test("throws error if duplicate reagent attempted to be assigned in an experiment", async () => {
+      const payload: AssignReagentToExperimentHandlerRequest = {
+        experimentId: "1",
+        reagentId: "2",
+        reactionSchemeLocation: "LEFT_SIDE",
+        equivalents: 1,
+      };
+
+      await supertest(server)
+        .post("/experiments/assignReagentToExperiment")
+        .send(payload)
+        .expect(400);
     });
   });
 });

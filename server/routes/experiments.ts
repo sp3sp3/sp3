@@ -77,6 +77,13 @@ export const assignReagentToExperiment = async (
       if (e.code === "P2003") {
         return res.status(404).send(`Reagent not in DB: ${e.message}`);
       }
+      if (e.code === "P2002") {
+        return res
+          .status(400)
+          .send(
+            `Reagent ${reagentId} already assigned to experiment ${experimentId}: ${e.message}`,
+          );
+      }
     }
     return res.status(500).send(`Error: ${e}`);
   }

@@ -38,6 +38,8 @@ model ExperimentReagent {
   reagentId              Int
   reagent                Reagent                @relation(fields: [reagentId], references: [id])
   equivalents            Float
+
+  @@unique([experimentId, reagentId])
 }
 
 enum ReactionSchemeLocation {

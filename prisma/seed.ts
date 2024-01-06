@@ -104,14 +104,29 @@ const seedReagents = async () => {
         INSERT INTO "Reagent"
         (name, "canonicalSMILES")
         VALUES
-        ('ethanol', 'CCO')
+        ('ethanol', 'CCO'),
+        ('butane', 'CCCC')
 `;
+};
+
+const seedAssignReagentToExperiments = async () => {
+  await prisma.experimentReagent.createMany({
+    data: [
+      {
+        reagentId: 2,
+        experimentId: 1,
+        reactionSchemeLocation: "ABOVE_ARROW",
+        equivalents: 1,
+      },
+    ],
+  });
 };
 
 const seedForTests = async () => {
   await seedProjects();
   await seedExperiments();
   await seedReagents();
+  await seedAssignReagentToExperiments();
 };
 
 export const resetDB = async () => {

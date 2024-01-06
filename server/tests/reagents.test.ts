@@ -43,7 +43,7 @@ describe("reagents routes", () => {
 
       const expectedResult = {
         reagent: {
-          id: 2,
+          id: 3,
           name: "2,2'-Bipyridine",
           canonicalSMILES: "c1ccc(-c2ccccn2)nc1",
         },
