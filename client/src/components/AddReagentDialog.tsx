@@ -4,8 +4,8 @@ import { Autocomplete, Button, DialogContent, DialogContentText, DialogTitle, Fo
 import { ChangeEvent, Dispatch, SetStateAction, SyntheticEvent, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 import { ReactionSchemeLocation } from "@prisma/client"
-import { GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
-
+import { AddReagentHandlerResponse, GetReagentHandlerResponse, GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
+import { AssignReagentToExperimentHandlerResponse, assignReagentToExperiment } from "../../../server/routes/experiments"
 
 interface NameInputFormProps {
     setReagentName: Dispatch<SetStateAction<string | undefined>>
@@ -300,12 +300,62 @@ export const AddReagentDialog = () => {
     const [molecularWeightString, setMolecularWeightString] = useState<string>()
     const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>()
 
-    //TODO: remove toggle. THe user should be able to input name and SMILES for things that are not in pubchem
-    // right now, if they put smiles, they cannot assign a name
-    // the pubchem search should populate the fields
-    // but pubchem may not have the compound of interest
-    // also allow user to input MW
-    // and density
+    const saveReagentToBackend = async () => {
+        // check if this reagent exists already
+        const reagentResponse = await fetch(`http://localhost:3000/reagents/?smiles=${canonicalSMILES}`)
+        const reagentResult: GetReagentHandlerResponse = await reagentResponse.json()
+
+        let reagentId: number
+        if (!reagentResult.reagent) {
+            // if the reagent does not yet exist in the DB, need to create it
+            const addReagentResponse = await fetch(`http://localhost:3000/reagents/addReagent`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    reagentName: reagentName,
+                    canonicalSMILES: canonicalSMILES
+                })
+            })
+
+            const addReagentResult: AddReagentHandlerResponse = await addReagentResponse.json()
+            reagentId = addReagentResult.reagent.id
+            console.log("created new")
+        } else {
+            console.log("Already exists")
+            reagentId = reagentResult.reagent.id
+        }
+
+        // add the reagent to the experiment
+        const assignReagentToExptAPIReq = await fetch(`http://localhost:3000/experiments/assignReagentToExperiment`, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reagentId: reagentId,
+                experimentId: "1",
+                reactionSchemeLocation: reactionSchemeLocation,
+                equivalents: eq
+            })
+        })
+
+        console.log(assignReagentToExptAPIReq)
+        const assignResponse: AssignReagentToExperimentHandlerResponse = await assignReagentToExptAPIReq.json()
+        console.log(assignResponse)
+        if (assignReagentToExptAPIReq.status === 200) {
+            console.log("created new")
+            console.log(assignResponse.experiment)
+            console.log(`name: ${reagentName}, SMILES: ${canonicalSMILES}, eq: ${eq}, mw: ${molecularWeightString}, loc: ${reactionSchemeLocation}`)
+
+            //TODO: show indicator something worked
+
+        } else {
+            // TODO: show indicator something wrong
+        }
+    }
+
     useEffect(() => { }, [molecularWeightString])
     return (
         <>
@@ -338,9 +388,7 @@ export const AddReagentDialog = () => {
                             (canonicalSMILES || reagentName) && eq && molecularWeightString && reactionSchemeLocation ?
                                 <Button
                                     variant="outlined"
-                                    onClick={() => {
-                                        console.log(`name: ${reagentName}, SMILES: ${canonicalSMILES}, eq: ${eq}, mw: ${molecularWeightString}, loc: ${reactionSchemeLocation}`)
-                                    }}
+                                    onClick={async () => await saveReagentToBackend()}
                                 >
                                     SAVE
                                 </Button>

@@ -75,17 +75,21 @@ export const assignReagentToExperiment = async (
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2003") {
-        return res.status(404).send(`Reagent not in DB: ${e.message}`);
+        return res
+          .status(404)
+          .send(JSON.stringify(`Reagent not in DB: ${e.message}`));
       }
       if (e.code === "P2002") {
         return res
           .status(400)
           .send(
-            `Reagent ${reagentId} already assigned to experiment ${experimentId}: ${e.message}`,
+            JSON.stringify(
+              `Reagent ${reagentId} already assigned to experiment ${experimentId}`,
+            ),
           );
       }
     }
-    return res.status(500).send(`Error: ${e}`);
+    return res.status(500).send(JSON.stringify(`Error: ${e}`));
   }
 };
 

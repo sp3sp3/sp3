@@ -41,10 +41,12 @@ export const getReagentHandler = async (
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2010") {
-        return res.status(400).send(`${smiles} is an invalid SMILES`);
+        return res
+          .status(400)
+          .send(JSON.stringify(`${smiles} is an invalid SMILES`));
       }
     }
-    return res.status(500).send(`Error: ${e}`);
+    return res.status(500).send(JSON.stringify(`Error: ${e}`));
   }
 };
 
@@ -102,9 +104,13 @@ export const addReagentHandler = async (
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       return res
         .status(400)
-        .send(`Reagent ${reagentName || canonicalSMILES} already stored`);
+        .send(
+          JSON.stringify(
+            `Reagent ${reagentName || canonicalSMILES} already stored`,
+          ),
+        );
     }
-    return res.status(500).send(`Error: ${e}`);
+    return res.status(500).send(JSON.stringify(`Error: ${e}`));
   }
 };
 
