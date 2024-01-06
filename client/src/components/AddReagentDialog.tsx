@@ -1,6 +1,6 @@
 import Tooltip from '@mui/material/Tooltip';
 import InfoIcon from '@mui/icons-material/Info';
-import { Autocomplete, Button, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material"
+import { Alert, Autocomplete, Button, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Snackbar, Stack, TextField, Typography } from "@mui/material"
 import { ChangeEvent, Dispatch, SetStateAction, SyntheticEvent, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 import { ReactionSchemeLocation } from "@prisma/client"
@@ -214,7 +214,6 @@ const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight, setMole
     const [mwHelperText, setMWHelperText] = useState<string>()
 
     useEffect(() => {
-        console.log(molecularWeight)
         if (molecularWeight && isNaN(Number(molecularWeight))) {
             setMWHelperText(NUMBER_INPUT_ERROR_MSG)
         } else {
@@ -342,7 +341,10 @@ const ReactionSchemeLocationForm = ({ setReactionSchemeLocation }: ReactionSchem
 }
 
 
-export const AddReagentDialog = () => {
+interface AddReagentDialogProps {
+    setOpen: Dispatch<SetStateAction<boolean>>
+}
+export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
     const [eq, setEq] = useState<number>()
     const [reagentName, setReagentName] = useState<string>()
     const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
@@ -358,6 +360,9 @@ export const AddReagentDialog = () => {
     // saving fails there because NaN is falsey
     const [densityFormValid, setDensityFormValid] = useState<boolean>(true)
     const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>()
+    const [snackBarOpen, setSnackBarOpen] = useState<boolean>(false)
+    const [successfulAdd, setSuccessfulAdd] = useState<boolean>()
+    const [errorMsg, setErrorMsg] = useState<string>()
 
     const saveReagentToBackend = async () => {
         // check if this reagent exists already
@@ -380,9 +385,7 @@ export const AddReagentDialog = () => {
 
             const addReagentResult: AddReagentHandlerResponse = await addReagentResponse.json()
             reagentId = addReagentResult.reagent.id
-            console.log("created new")
         } else {
-            console.log("Already exists")
             reagentId = reagentResult.reagent.id
         }
 
@@ -400,19 +403,17 @@ export const AddReagentDialog = () => {
             })
         })
 
-        console.log(assignReagentToExptAPIReq)
+        // console.log(assignReagentToExptAPIReq)
         const assignResponse: AssignReagentToExperimentHandlerResponse = await assignReagentToExptAPIReq.json()
-        console.log(assignResponse)
         if (assignReagentToExptAPIReq.status === 200) {
-            console.log("created new")
-            console.log(assignResponse.experiment)
-            console.log(`name: ${reagentName}, SMILES: ${canonicalSMILES}, eq: ${eq}, mw: ${molecularWeightString}, loc: ${reactionSchemeLocation}, density: ${density}`)
-
-            //TODO: show indicator something worked
-
+            setSuccessfulAdd(true)
         } else {
-            // TODO: show indicator something wrong
+            if (assignResponse.toString().includes(`Reagent ${reagentId} already assigned to experiment`)) {
+                setErrorMsg(`${reagentName} already assigned to this experiment`)
+            }
+            setSuccessfulAdd(false)
         }
+        setSnackBarOpen(true)
     }
 
     useEffect(() => { }, [molecularWeightString])
@@ -494,6 +495,16 @@ export const AddReagentDialog = () => {
                         }
                     </Grid>
                 </Stack>
+                <Snackbar open={snackBarOpen}>
+                    {
+                        successfulAdd ?
+                            <Alert
+                                onClose={() => setOpen(false)}
+                                severity="success">Reagent successfully added!</Alert>
+                            :
+                            <Alert severity="error">Error adding reagent: {errorMsg}</Alert>
+                    }
+                </Snackbar>
             </DialogContent>
         </>
     )

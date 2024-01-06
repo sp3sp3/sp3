@@ -26,7 +26,7 @@ export const ReagentTable = () => {
                 fullWidth={true}
                 maxWidth='xl'
             >
-                <AddReagentDialog />
+                <AddReagentDialog setOpen={setOpen} />
             </Dialog>
 
 
