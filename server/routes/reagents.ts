@@ -63,7 +63,7 @@ export const getSimilarReagentsByNameHandler = async (
   res: TypedResponse<GetSimilarReagentsByNameHandlerResponse>,
 ) => {
   const { name } = req.query;
-  const nameWithOperator = name + "%";
+  const nameWithOperator = name.toLowerCase() + "%";
   const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
             SELECT id, name, "canonicalSMILES"::text
             FROM "Reagent"
@@ -97,7 +97,7 @@ export const addReagentHandler = async (
             INSERT INTO "Reagent"
             (name, "canonicalSMILES")
             VALUES
-            (${reagentName}, ${canonicalSMILES}::mol)
+            (${reagentName?.toLowerCase()}, ${canonicalSMILES}::mol)
             RETURNING id, name, "canonicalSMILES"::text`;
     res.json({ reagent: result[0] });
   } catch (e) {

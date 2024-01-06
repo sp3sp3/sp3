@@ -1,5 +1,9 @@
 import { server } from "../index";
-import { PrismaClient } from "@prisma/client";
+import {
+  ExperimentReagent,
+  PrismaClient,
+  ReactionSchemeLocation,
+} from "@prisma/client";
 import { resetDB, runSeedForTests } from "../../prisma/seed";
 import {
   test,
@@ -11,6 +15,7 @@ import {
 } from "@jest/globals";
 import {
   AssignReagentToExperimentHandlerRequest,
+  AssignReagentToExperimentHandlerResponse,
   CreateExperimentHandlerRequest,
 } from "../routes/experiments";
 import supertest from "supertest";
@@ -52,6 +57,18 @@ describe("experiments routes", () => {
   });
 
   describe("POST /assignReagentToExperiment", () => {
+    function compareExptReagent(
+      a: ExperimentReagent,
+      b: ExperimentReagent,
+    ): number {
+      if (a.id < b.id) {
+        return 1;
+      } else if (a.id > b.id) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
     test("assigns a reagent to experiment", async () => {
       const payload: AssignReagentToExperimentHandlerRequest = {
         experimentId: "1",
@@ -73,22 +90,29 @@ describe("experiments routes", () => {
             {
               id: 1,
               reagentId: 2,
-              reactionSchemeLocation: "ABOVE_ARROW",
+              reactionSchemeLocation: ReactionSchemeLocation.ABOVE_ARROW,
               experimentId: 1,
               equivalents: 1,
             },
             {
               id: 2,
               reagentId: 1,
-              reactionSchemeLocation: "LEFT_SIDE",
+              reactionSchemeLocation: ReactionSchemeLocation.LEFT_SIDE,
               experimentId: 1,
               equivalents: 1,
             },
-          ],
+          ].sort(compareExptReagent),
         },
       };
 
-      expect(result.body).toStrictEqual(expectedResult);
+      const resultBody: AssignReagentToExperimentHandlerResponse = result.body;
+      const { reagents, ...rest } = resultBody.experiment;
+
+      reagents.sort(compareExptReagent);
+
+      const sortedResult = { experiment: { ...rest, reagents: reagents } };
+
+      expect(sortedResult).toStrictEqual(expectedResult);
     });
 
     test("throws error if reagent not in DB", async () => {

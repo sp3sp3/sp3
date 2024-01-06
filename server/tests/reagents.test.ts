@@ -44,7 +44,7 @@ describe("reagents routes", () => {
       const expectedResult = {
         reagent: {
           id: 3,
-          name: "2,2'-Bipyridine",
+          name: "2,2'-bipyridine",
           canonicalSMILES: "c1ccc(-c2ccccn2)nc1",
         },
       };
@@ -62,7 +62,7 @@ describe("reagents routes", () => {
         .send(payload)
         .expect(400);
 
-      expect(result.text).toStrictEqual("Reagent ethanol already stored");
+      expect(result.text).toStrictEqual('"Reagent ethanol already stored"');
     });
 
     test("throws error if the reagent (SMILES) is already in the DB", async () => {
@@ -74,7 +74,7 @@ describe("reagents routes", () => {
         .post("/reagents/addReagent")
         .send(payload);
 
-      expect(result.text).toStrictEqual("Reagent CCO already stored");
+      expect(result.text).toStrictEqual('"Reagent CCO already stored"');
     });
   });
 
@@ -124,7 +124,7 @@ describe("reagents routes", () => {
     test("throws error if invalid smiles", async () => {
       const result = await supertest(server).get("/reagents?smiles=ABC");
 
-      expect(result.text).toStrictEqual("ABC is an invalid SMILES");
+      expect(result.text).toStrictEqual('"ABC is an invalid SMILES"');
     });
 
     test("returns null if no matching SMILES found", async () => {
