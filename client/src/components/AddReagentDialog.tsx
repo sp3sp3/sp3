@@ -5,7 +5,10 @@ import { ChangeEvent, Dispatch, SetStateAction, SyntheticEvent, useEffect, useSt
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 import { ReactionSchemeLocation } from "@prisma/client"
 import { AddReagentHandlerResponse, GetReagentHandlerResponse, GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
-import { AssignReagentToExperimentHandlerResponse, assignReagentToExperiment } from "../../../server/routes/experiments"
+import { AssignReagentToExperimentHandlerResponse } from "../../../server/routes/experiments"
+
+
+const NUMBER_INPUT_ERROR_MSG = "Please enter a valid number without commas, and use a decimal point if needed"
 
 interface NameInputFormProps {
     setReagentName: Dispatch<SetStateAction<string | undefined>>
@@ -108,6 +111,9 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                         }
                     }
                     const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${inputName}/property/MolecularWeight,CanonicalSMILES/json`,)
+                    //TODO: add density from pug_view
+                    // need to get the CID then make another request
+                    // example of THF: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8028/JSON
                     if (response.status === 404) {
                         setNameHelperText('Not found in PubChem')
                         setCanonicalSMILES('')
@@ -202,13 +208,25 @@ const SMILESInputForm = ({
 interface MolecularWeightInputFormProps {
     molecularWeight?: string;
     setMolecularWeight: Dispatch<SetStateAction<string | undefined>>
+    setMolecularWeightFormValid: Dispatch<SetStateAction<boolean>>
 }
-const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight }: MolecularWeightInputFormProps) => {
+const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight, setMolecularWeightFormValid }: MolecularWeightInputFormProps) => {
     const [mwHelperText, setMWHelperText] = useState<string>()
+
+    useEffect(() => {
+        console.log(molecularWeight)
+        if (molecularWeight && isNaN(Number(molecularWeight))) {
+            setMWHelperText(NUMBER_INPUT_ERROR_MSG)
+        } else {
+            setMolecularWeightFormValid(true)
+        }
+
+    }, [molecularWeight])
     return (
         <>
             <TextField
                 label="Molecular Weight (g/mol)"
+                error={mwHelperText === NUMBER_INPUT_ERROR_MSG ? true : false}
                 value={molecularWeight}
                 autoFocus
                 InputLabelProps={{ shrink: molecularWeight ? true : false }}
@@ -219,19 +237,52 @@ const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight }: Molec
                 variant='standard'
                 onChange={(event) => {
                     const val = event.target.value
-                    console.log("val: ", typeof val)
                     const numVal = Number(val)
-                    console.log(numVal)
                     if (isNaN(numVal)) {
-                        setMWHelperText("Please enter a valid number without commas, and use a decimal point if needed")
+                        setMWHelperText(NUMBER_INPUT_ERROR_MSG)
+                        setMolecularWeightFormValid(false)
                     } else {
                         setMWHelperText("")
+                        setMolecularWeightFormValid(true)
                     }
                     setMolecularWeight(val)
                 }}
             />
         </>
     )
+}
+
+interface DensityInputFormProps {
+    setDensity: Dispatch<SetStateAction<number | undefined>>
+    setDensityFormValid: Dispatch<SetStateAction<boolean>>
+}
+const DensityInputForm = ({ setDensity, setDensityFormValid }: DensityInputFormProps) => {
+    const [densityHelperText, setDensityHelperText] = useState<string>('')
+    return (
+        <TextField
+            label="Density (g/mL)"
+            autoFocus
+            margin="normal"
+            error={densityHelperText === NUMBER_INPUT_ERROR_MSG ? true : false}
+            id="density"
+            fullWidth
+            variant="standard"
+            helperText={densityHelperText}
+            onChange={(event) => {
+                const val = event.target.value
+                const numVal = Number(val)
+                if (isNaN(numVal)) {
+                    setDensityHelperText(NUMBER_INPUT_ERROR_MSG)
+                    setDensityFormValid(false)
+                } else {
+                    setDensityFormValid(true)
+                    setDensityHelperText("")
+                }
+
+                setDensity(numVal)
+            }}
+        />)
+
 }
 
 
@@ -242,6 +293,7 @@ const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
     const [eqHelperText, setEqHelperText] = useState<string>('')
     return (<TextField
         label="Equivalents"
+        error={eqHelperText === NUMBER_INPUT_ERROR_MSG ? true : false}
         autoFocus
         margin="normal"
         id="equivalents"
@@ -252,7 +304,7 @@ const EquivalentsInputForm = ({ handleSetEq }: EquivalentsInputFormProps) => {
             const val = event.target.value
             const numVal = Number(val)
             if (isNaN(numVal)) {
-                setEqHelperText("Please enter a valid number without commas, and use a decimal point if needed")
+                setEqHelperText(NUMBER_INPUT_ERROR_MSG)
             } else {
                 setEqHelperText("")
             }
@@ -298,6 +350,13 @@ export const AddReagentDialog = () => {
     // can end up switching up the types from number to string. This causes decimal
     // points not able to be typed in after user types something that is NaN
     const [molecularWeightString, setMolecularWeightString] = useState<string>()
+    // because mw is a string, need to flag if it is ok as a number. If ok, then allow save
+    const [molecularWeightFormValid, setMolecularWeightFormValid] = useState<boolean>(false)
+    const [density, setDensity] = useState<number>()
+    // need a flag for if density if valid because density is optional
+    // equivalents are mandatory, so if eq becomes NaN, then the boolean check for 
+    // saving fails there because NaN is falsey
+    const [densityFormValid, setDensityFormValid] = useState<boolean>(true)
     const [reactionSchemeLocation, setReactionSchemeLocation] = useState<ReactionSchemeLocation>()
 
     const saveReagentToBackend = async () => {
@@ -347,7 +406,7 @@ export const AddReagentDialog = () => {
         if (assignReagentToExptAPIReq.status === 200) {
             console.log("created new")
             console.log(assignResponse.experiment)
-            console.log(`name: ${reagentName}, SMILES: ${canonicalSMILES}, eq: ${eq}, mw: ${molecularWeightString}, loc: ${reactionSchemeLocation}`)
+            console.log(`name: ${reagentName}, SMILES: ${canonicalSMILES}, eq: ${eq}, mw: ${molecularWeightString}, loc: ${reactionSchemeLocation}, density: ${density}`)
 
             //TODO: show indicator something worked
 
@@ -364,8 +423,10 @@ export const AddReagentDialog = () => {
             </DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    If the molecule has a well known name, try search for it on PubChem and automatically get the SMILES and molecular weight.
-                    Otherwise, you can manually enter the values you need for your reagent.
+                    <Typography variant="body2">
+                        If the molecule has a well known name, try search for it on PubChem and automatically get the SMILES and molecular weight.
+                        Otherwise, you can manually enter the values you need for your reagent.
+                    </Typography>
                 </DialogContentText>
                 <Stack direction="row" spacing={2}>
                     <Stack direction="column" spacing={2} sx={{ width: '100%' }} >
@@ -378,14 +439,18 @@ export const AddReagentDialog = () => {
                             setCanonicalSMILES={setCanonicalSMILES}
                             setMolecularWeightString={setMolecularWeightString}
                         />
-                        <MolecularWeightInputForm
-                            molecularWeight={molecularWeightString}
-                            setMolecularWeight={setMolecularWeightString}
-                        />
+                        <Stack direction="row" spacing={3}>
+                            <MolecularWeightInputForm
+                                molecularWeight={molecularWeightString}
+                                setMolecularWeight={setMolecularWeightString}
+                                setMolecularWeightFormValid={setMolecularWeightFormValid}
+                            />
+                            <DensityInputForm setDensity={setDensity} setDensityFormValid={setDensityFormValid} />
+                        </Stack>
                         <EquivalentsInputForm handleSetEq={setEq} />
                         <ReactionSchemeLocationForm setReactionSchemeLocation={setReactionSchemeLocation} />
                         {
-                            (canonicalSMILES || reagentName) && eq && molecularWeightString && reactionSchemeLocation ?
+                            (canonicalSMILES || reagentName) && densityFormValid && eq && molecularWeightString && molecularWeightFormValid && reactionSchemeLocation ?
                                 <Button
                                     variant="outlined"
                                     onClick={async () => await saveReagentToBackend()}
