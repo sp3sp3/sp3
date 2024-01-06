@@ -502,7 +502,9 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
                                 onClose={() => setOpen(false)}
                                 severity="success">Reagent successfully added!</Alert>
                             :
-                            <Alert severity="error">Error adding reagent: {errorMsg}</Alert>
+                            <Alert
+                                onClose={() => setSnackBarOpen(false)}
+                                severity="error">Error adding reagent: {errorMsg}</Alert>
                     }
                 </Snackbar>
             </DialogContent>
