@@ -55,4 +55,6 @@ model Reagent {
   //TODO: add additional names or aliases? (maybe they have sodium hydroxide, or NaOH. Should find both)
   canonicalSMILES Unsupported("mol")? @unique // should have either name or a canonicalSMILES
   experiments     ExperimentReagent[] // experiments that this reagent was used in
+  molecularWeight Float
+  density         Float?
 }

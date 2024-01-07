@@ -77,6 +77,8 @@ export const getSimilarReagentsByNameHandler = async (
 export interface AddReagentHandlerRequest {
   reagentName?: string;
   canonicalSMILES?: string;
+  molecularWeight: number;
+  density?: number;
 }
 
 export type ReagentWithSMILES = Reagent & { canonicalSMILES: string };
@@ -89,19 +91,27 @@ export const addReagentHandler = async (
   req: TypedRequestBody<AddReagentHandlerRequest>,
   res: TypedResponse<AddReagentHandlerResponse>,
 ) => {
-  const { reagentName, canonicalSMILES } = req.body;
+  const { reagentName, canonicalSMILES, molecularWeight, density } = req.body;
   try {
     // use queryRaw to insert RDKit molecule type which is not supported by Prisma
     // need to deserialize the RDKit mol type to a text
     const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
             INSERT INTO "Reagent"
-            (name, "canonicalSMILES")
+            (name, "canonicalSMILES", "molecularWeight", density)
             VALUES
-            (${reagentName?.toLowerCase()}, ${canonicalSMILES}::mol)
+            (${reagentName?.toLowerCase()}, 
+                ${canonicalSMILES}::mol, 
+                ${molecularWeight}, 
+                ${density})
             RETURNING id, name, "canonicalSMILES"::text`;
     res.json({ reagent: result[0] });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (!molecularWeight) {
+        return res
+          .status(400)
+          .send(JSON.stringify(`Please provide the molecular weight`));
+      }
       return res
         .status(400)
         .send(
@@ -113,6 +123,8 @@ export const addReagentHandler = async (
     return res.status(500).send(JSON.stringify(`Error: ${e}`));
   }
 };
+
+// TODO: editReagent
 
 reagentRoutes.post("/addReagent", addReagentHandler);
 reagentRoutes.get("/", getReagentHandler);

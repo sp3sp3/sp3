@@ -102,10 +102,10 @@ const seedExperiments = async () => {
 const seedReagents = async () => {
   await prisma.$queryRaw`
         INSERT INTO "Reagent"
-        (name, "canonicalSMILES")
+        (name, "canonicalSMILES", "molecularWeight")
         VALUES
-        ('ethanol', 'CCO'),
-        ('butane', 'CCCC')
+        ('ethanol', 'CCO', 46.07),
+        ('butane', 'CCCC', 58.12)
 `;
 };
 

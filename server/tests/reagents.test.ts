@@ -35,6 +35,7 @@ describe("reagents routes", () => {
       const payload: AddReagentHandlerRequest = {
         reagentName: "2,2'-Bipyridine",
         canonicalSMILES: "C1=CC=NC(=C1)C2=CC=CC=N2",
+        molecularWeight: 156.18,
       };
 
       const result = await supertest(server)
@@ -55,6 +56,7 @@ describe("reagents routes", () => {
     test("throws error if the reagent (name) is already in the DB", async () => {
       const payload: AddReagentHandlerRequest = {
         reagentName: "ethanol",
+        molecularWeight: 46.07,
       };
 
       const result = await supertest(server)
@@ -68,6 +70,7 @@ describe("reagents routes", () => {
     test("throws error if the reagent (SMILES) is already in the DB", async () => {
       const payload: AddReagentHandlerRequest = {
         canonicalSMILES: "CCO",
+        molecularWeight: 46.07,
       };
 
       const result = await supertest(server)
@@ -75,6 +78,24 @@ describe("reagents routes", () => {
         .send(payload);
 
       expect(result.text).toStrictEqual('"Reagent CCO already stored"');
+    });
+
+    test("throws error if missing a required field", async () => {
+      // ignore type error saying there is a missing field
+      // because it is intended to test what happens if a
+      // required field is missing
+      // @ts-ignore
+      const payload: AddReagentHandlerRequest = {
+        canonicalSMILES: "CSCOCSCC",
+      };
+
+      const result = await supertest(server)
+        .post("/reagents/addReagent")
+        .send(payload);
+
+      expect(result.text).toStrictEqual(
+        '"Please provide the molecular weight"',
+      );
     });
   });
 

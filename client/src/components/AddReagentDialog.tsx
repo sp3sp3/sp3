@@ -5,9 +5,11 @@ import { Alert, Autocomplete, Button, DialogContent, DialogContentText, DialogTi
 import { ChangeEvent, Dispatch, SetStateAction, SyntheticEvent, useEffect, useState } from "react"
 import MoleculeStructure from "./MoleculeStructure/MoleculeStructure"
 import { ReactionSchemeLocation } from "@prisma/client"
-import { AddReagentHandlerResponse, GetReagentHandlerResponse, GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
-import { AssignReagentToExperimentHandlerResponse } from "../../../server/routes/experiments"
+import { AddReagentHandlerRequest, AddReagentHandlerResponse, GetReagentHandlerResponse, GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
+import { AssignReagentToExperimentHandlerRequest, AssignReagentToExperimentHandlerResponse } from "../../../server/routes/experiments"
 
+// TODO: save mw and density to db
+// autopopulate fields if we find it
 
 const NUMBER_INPUT_ERROR_MSG = "Please enter a valid number without commas, and use a decimal point if needed"
 
@@ -275,7 +277,7 @@ const MolecularWeightInputForm = ({ molecularWeight, setMolecularWeight, setMole
 }
 
 interface DensityInputFormProps {
-    setDensity: Dispatch<SetStateAction<number | undefined>>
+    setDensity: Dispatch<SetStateAction<string | undefined>>
     setDensityFormValid: Dispatch<SetStateAction<boolean>>
     densityFoundInPubChem: boolean
     reagentName?: string
@@ -321,7 +323,7 @@ const DensityInputForm = ({ setDensity, setDensityFormValid, densityFoundInPubCh
                             setDensityHelperText("")
                         }
 
-                        setDensity(numVal)
+                        setDensity(val)
                     }}
                 />
             </Tooltip>
@@ -401,13 +403,13 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
     const [eq, setEq] = useState<number>()
     const [reagentName, setReagentName] = useState<string>()
     const [canonicalSMILES, setCanonicalSMILES] = useState<string>()
-    // set this as string because populating the value of textfield programatically 
+    // set mw and density as string because populating the value of textfield programatically 
     // can end up switching up the types from number to string. This causes decimal
     // points not able to be typed in after user types something that is NaN
     const [molecularWeightString, setMolecularWeightString] = useState<string>()
+    const [density, setDensity] = useState<string>()
     // because mw is a string, need to flag if it is ok as a number. If ok, then allow save
     const [molecularWeightFormValid, setMolecularWeightFormValid] = useState<boolean>(false)
-    const [density, setDensity] = useState<number>()
     // need a flag for if density if valid because density is optional
     // equivalents are mandatory, so if eq becomes NaN, then the boolean check for 
     // saving fails there because NaN is falsey
@@ -425,16 +427,19 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
 
         let reagentId: number
         if (!reagentResult.reagent) {
+            const reagentToAdd: AddReagentHandlerRequest = {
+                reagentName: reagentName,
+                canonicalSMILES: canonicalSMILES,
+                molecularWeight: Number(molecularWeightString),
+                density: Number(density)
+            }
             // if the reagent does not yet exist in the DB, need to create it
             const addReagentResponse = await fetch(`http://localhost:3000/reagents/addReagent`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    reagentName: reagentName,
-                    canonicalSMILES: canonicalSMILES
-                })
+                body: JSON.stringify(reagentToAdd)
             })
 
             const addReagentResult: AddReagentHandlerResponse = await addReagentResponse.json()
@@ -443,31 +448,37 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
             reagentId = reagentResult.reagent.id
         }
 
-        // add the reagent to the experiment
-        const assignReagentToExptAPIReq = await fetch(`http://localhost:3000/experiments/assignReagentToExperiment`, {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                reagentId: reagentId,
+        // assign the reagent to the experiment
+        // the form has been validated by the SAVE button logic, 
+        // here the check is to typeguard
+        if (reactionSchemeLocation && eq) {
+            const reagentToAssign: AssignReagentToExperimentHandlerRequest = {
+                reagentId: reagentId.toString(),
                 experimentId: "1",
                 reactionSchemeLocation: reactionSchemeLocation,
-                equivalents: eq
-            })
-        })
-
-        // console.log(assignReagentToExptAPIReq)
-        const assignResponse: AssignReagentToExperimentHandlerResponse = await assignReagentToExptAPIReq.json()
-        if (assignReagentToExptAPIReq.status === 200) {
-            setSuccessfulAdd(true)
-        } else {
-            if (assignResponse.toString().includes(`Reagent ${reagentId} already assigned to experiment`)) {
-                setErrorMsg(`${reagentName} already assigned to this experiment`)
+                equivalents: eq,
             }
-            setSuccessfulAdd(false)
+
+            const assignReagentToExptAPIReq = await fetch(`http://localhost:3000/experiments/assignReagentToExperiment`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(reagentToAssign)
+            })
+
+            // console.log(assignReagentToExptAPIReq)
+            const assignResponse: AssignReagentToExperimentHandlerResponse = await assignReagentToExptAPIReq.json()
+            if (assignReagentToExptAPIReq.status === 200) {
+                setSuccessfulAdd(true)
+            } else {
+                if (assignResponse.toString().includes(`Reagent ${reagentId} already assigned to experiment`)) {
+                    setErrorMsg(`${reagentName} already assigned to this experiment`)
+                }
+                setSuccessfulAdd(false)
+            }
+            setSnackBarOpen(true)
         }
-        setSnackBarOpen(true)
     }
 
     useEffect(() => { }, [molecularWeightString])
