@@ -108,6 +108,8 @@ describe("reagents routes", () => {
           id: 1,
           name: "ethanol",
           canonicalSMILES: "CCO",
+          molecularWeight: 46.07,
+          density: 0.79,
         },
       };
 
@@ -122,6 +124,8 @@ describe("reagents routes", () => {
           id: 1,
           name: "ethanol",
           canonicalSMILES: "CCO",
+          molecularWeight: 46.07,
+          density: 0.79,
         },
       };
 
@@ -136,6 +140,8 @@ describe("reagents routes", () => {
           id: 1,
           name: "ethanol",
           canonicalSMILES: "CCO",
+          molecularWeight: 46.07,
+          density: 0.79,
         },
       };
 
@@ -173,6 +179,8 @@ describe("reagents routes", () => {
             id: 1,
             name: "ethanol",
             canonicalSMILES: "CCO",
+            molecularWeight: 46.07,
+            density: 0.79,
           },
         ],
       };

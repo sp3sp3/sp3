@@ -30,7 +30,7 @@ export const getReagentHandler = async (
       : Prisma.sql`name=${name}`;
 
     const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
-            SELECT id, name, "canonicalSMILES"::text
+            SELECT id, name, "canonicalSMILES"::text, density, "molecularWeight"
             FROM "Reagent"
             WHERE ${query}`;
 
@@ -65,7 +65,7 @@ export const getSimilarReagentsByNameHandler = async (
   const { name } = req.query;
   const nameWithOperator = name.toLowerCase() + "%";
   const result = await prisma.$queryRaw<ReagentWithSMILES[]>`
-            SELECT id, name, "canonicalSMILES"::text
+            SELECT id, name, "canonicalSMILES"::text, "molecularWeight", density
             FROM "Reagent"
             WHERE name LIKE ${nameWithOperator}`;
   if (result.length > 0) {
