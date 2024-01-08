@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   server:
     image: node:20
@@ -7,17 +8,33 @@ services:
     working_dir: /sp3
     volumes:
       - ./:/sp3
-      - ./your-db.db:/sp3/prisma/dev.db
     environment:
-      DATABASE_URL: "file:./dev.db"
+      DATABASE_URL: "postgresql://postgres:spthree@db:5432/postgres?schema=public"
+    depends_on:
+      db:
+        condition: service_healthy
 
 
   client: 
     image: node:20
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm install && npm run start"
     ports: 
       - 127.0.0.1:5173:5173
     working_dir: /client
     volumes:
       - ./client:/client
 
+  db:
+    image: mcs07/postgres-rdkit
+    restart: always
+    ports:
+      - 5431:5432
+    environment:
+      POSTGRES_PASSWORD: spthree
+    volumes:
+     - ./your-postgresql-db:/var/lib/postgresql/data
+    healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U postgres"]
+          interval: 10s
+          timeout: 5s
+          retries: 5

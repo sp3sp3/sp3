@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeOptions } from '@mui/material/styles';
 import { Route, Routes } from 'react-router-dom';
 import { SubProjectPage } from './pages/SubProject';
+import { ExperimentPage } from './pages/Experiment';
 
 export const themeOptions: ThemeOptions = {
     palette: {
@@ -42,6 +43,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<ProjectOverview />} />
                         <Route path="/projects/:id" element={<SubProjectPage />} />
+                        <Route path="/projects/:id/experiment/:experiment_id" element={<ExperimentPage />} />
                     </Routes>
                 </CssBaseline>
             </ThemeProvider >

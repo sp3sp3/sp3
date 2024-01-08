@@ -67,7 +67,9 @@ export const getProjectByIdHandler = async (
   });
 
   if (!project) {
-    res.status(404).send(`Project id=${req.params.id} not found`);
+    res
+      .status(404)
+      .send(JSON.stringify(`Project id=${req.params.id} not found`));
   } else {
     res.json({ project: project2ProjectWithDataBuffer(project) });
   }
@@ -93,11 +95,11 @@ export const getPathToProjectHandler = async (
         name,
         "parentId"
     FROM "Project"
-    WHERE id=${req.params.id}
+    WHERE id=${Number(req.params.id)}
     UNION ALL 
     SELECT p.id,
             p.name, 
-            p."ParentId"
+            p."parentId"
     FROM path, "Project" p
     WHERE p.id=path."parentId"
     ) 
@@ -138,7 +140,7 @@ export const createProjectHandler = async (
     res.json({ project: project2ProjectWithDataBuffer(project) });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientValidationError) {
-      res.status(400).send(`Invalid request: ${e.message}`);
+      res.status(400).send(JSON.stringify(`Invalid request: ${e.message}`));
     }
   }
 };

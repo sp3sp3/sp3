@@ -20,11 +20,11 @@ export type SupertestResponse<T> = Omit<Response, "body"> & { body: T };
 const prisma = new PrismaClient();
 describe("projects handlers", () => {
   beforeEach(async () => {
+    await resetDB();
     await runSeedForTests();
   });
 
   afterEach(async () => {
-    await resetDB();
     await prisma.$disconnect();
   });
 
@@ -78,7 +78,7 @@ describe("projects handlers", () => {
             base64image: null,
             children: [
               {
-                id: 3,
+                id: 2,
                 name: "synthesis of XYZ-1",
                 parentId: 1,
                 base64image: expect.any(String),
@@ -86,7 +86,7 @@ describe("projects handlers", () => {
               {
                 name: "synthesis of XYZ-2",
                 parentId: 1,
-                id: 6,
+                id: 3,
                 base64image: expect.any(String),
               },
             ],
@@ -111,9 +111,9 @@ describe("projects handlers", () => {
             {
               id: 5,
               name: "step 2 - amide coupling",
-              parentId: 3,
+              parentId: 2,
             },
-            { id: 3, name: "synthesis of XYZ-1", parentId: 1 },
+            { id: 2, name: "synthesis of XYZ-1", parentId: 1 },
             { id: 1, name: "EGFR inhibitors", parentId: null },
           ],
         };
@@ -121,11 +121,11 @@ describe("projects handlers", () => {
       });
 
       test("returns path to project -- root to middle node", async () => {
-        const result = await supertest(server).get("/projects/pathToProject/3");
+        const result = await supertest(server).get("/projects/pathToProject/2");
 
         const expectedResult = {
           path: [
-            { id: 3, name: "synthesis of XYZ-1", parentId: 1 },
+            { id: 2, name: "synthesis of XYZ-1", parentId: 1 },
             { id: 1, name: "EGFR inhibitors", parentId: null },
           ],
         };
