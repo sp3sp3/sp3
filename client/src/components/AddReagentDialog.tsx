@@ -431,7 +431,7 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
                 reagentName: reagentName,
                 canonicalSMILES: canonicalSMILES,
                 molecularWeight: Number(molecularWeightString),
-                density: Number(density)
+                density: density ? Number(density) : undefined
             }
             // if the reagent does not yet exist in the DB, need to create it
             const addReagentResponse = await fetch(`http://localhost:3000/reagents/addReagent`, {
