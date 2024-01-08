@@ -8,9 +8,6 @@ import { ReactionSchemeLocation } from "@prisma/client"
 import { AddReagentHandlerRequest, AddReagentHandlerResponse, GetReagentHandlerResponse, GetSimilarReagentsByNameHandlerResponse } from "../../../server/routes/reagents"
 import { AssignReagentToExperimentHandlerRequest, AssignReagentToExperimentHandlerResponse } from "../../../server/routes/experiments"
 
-// TODO: save mw and density to db
-// autopopulate fields if we find it
-
 const NUMBER_INPUT_ERROR_MSG = "Please enter a valid number without commas, and use a decimal point if needed"
 
 interface NameInputFormProps {
@@ -18,9 +15,10 @@ interface NameInputFormProps {
     setCanonicalSMILES: Dispatch<SetStateAction<string | undefined>>
     setMolecularWeightString: Dispatch<SetStateAction<string | undefined>>
     setDensityFoundInPubChem: Dispatch<SetStateAction<boolean>>
+    setDensity: Dispatch<SetStateAction<string | undefined>>
 }
 
-const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightString, setDensityFoundInPubChem }: NameInputFormProps) => {
+const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightString, setDensityFoundInPubChem, setDensity }: NameInputFormProps) => {
     const [inputName, setInputName] = useState<string>()
     const [NameHelperText, setNameHelperText] = useState<string>()
     const [options, setOptions] = useState<string[]>([])
@@ -66,9 +64,13 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
         // recalculate things whenever input is changed
         // if there is no input
         if (inputName === '') {
+            // reset the fields
             setNameHelperText('')
             setCanonicalSMILES('')
             setReagentName('')
+            setMolecularWeightString('')
+            setDensity('')
+            setDensityFoundInPubChem(false)
         }
         setReagentName(inputName)
 
@@ -92,6 +94,8 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                         const match = queryResults?.reagents.find((i) => i.name === value)
                         setCanonicalSMILES(match?.canonicalSMILES)
                         setReagentName(match?.name ?? undefined)
+                        setMolecularWeightString(match?.molecularWeight.toString())
+                        setDensity(match?.density?.toString())
                     }}
                     renderInput={(params) => (
                         <TextField {...params}
@@ -134,6 +138,7 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                         }
                     }
                     const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${inputName}/property/MolecularWeight,CanonicalSMILES/json`,)
+                    setDensity('')
                     if (response.status === 404) {
                         setNameHelperText('Not found in PubChem')
                         setCanonicalSMILES('')
@@ -145,9 +150,7 @@ const NameInputForm = ({ setReagentName, setCanonicalSMILES, setMolecularWeightS
                         const cid = pcProperties.CID
                         // check if there is a density in its pub chem properties 
                         // if there is, just make a link for the user to click and inspect the data
-                        if (await checkIfDensityInPubChem(cid)) {
-                            setDensityFoundInPubChem(true)
-                        }
+                        setDensityFoundInPubChem(await checkIfDensityInPubChem(cid))
                         setMolecularWeightString(pcProperties.MolecularWeight)
                         const mol = window.RDKit.get_mol(pubchemSMILES)
                         const canonicalized = mol?.get_smiles()
@@ -281,8 +284,9 @@ interface DensityInputFormProps {
     setDensityFormValid: Dispatch<SetStateAction<boolean>>
     densityFoundInPubChem: boolean
     reagentName?: string
+    density?: string
 }
-const DensityInputForm = ({ setDensity, setDensityFormValid, densityFoundInPubChem, reagentName }: DensityInputFormProps) => {
+const DensityInputForm = ({ setDensity, setDensityFormValid, densityFoundInPubChem, reagentName, density }: DensityInputFormProps) => {
     const [densityHelperText, setDensityHelperText] = useState<string>('')
     return (
         <>
@@ -290,6 +294,8 @@ const DensityInputForm = ({ setDensity, setDensityFormValid, densityFoundInPubCh
                 title="PubChem can be searched for experimental values of density for this compound using the chemical name."
             >
                 <TextField
+                    value={density ?? ''}
+                    InputLabelProps={{ shrink: density ? true : false }}
                     label={
                         <Grid
                             container
@@ -501,6 +507,7 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
                             setCanonicalSMILES={setCanonicalSMILES}
                             setMolecularWeightString={setMolecularWeightString}
                             setDensityFoundInPubChem={setDensityFoundInPubChem}
+                            setDensity={setDensity}
                         />
                         <SMILESInputForm
                             canonicalSMILES={canonicalSMILES}
@@ -518,6 +525,7 @@ export const AddReagentDialog = ({ setOpen }: AddReagentDialogProps) => {
                                 setDensityFormValid={setDensityFormValid}
                                 densityFoundInPubChem={densityFoundInPubChem}
                                 reagentName={reagentName}
+                                density={density}
                             />
                         </Stack>
                         <EquivalentsInputForm handleSetEq={setEq} />
